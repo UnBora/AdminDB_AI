@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>Portfolio Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.6/dataTables.bootstrap5.min.css">
+    <style>
+        .portfolio-container { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .action-buttons { margin-bottom: 20px; display: flex; gap: 10px; }
+        .datatable-wrapper { background-color: white; border-radius: 5px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .portfolio-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .loading-overlay.show { display: flex; }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid portfolio-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-2">Portfolio Management</h1>
+                    <p class="text-muted mb-0">Showcase your enterprise projects and accomplishments</p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn btn-success" id="btnCreatePortfolio" data-bs-toggle="modal" data-bs-target="#portfolioModal">
+                    <i class="fas fa-plus"></i> Add Portfolio Item
+                </button>
+            </div>
+
+            <div class="datatable-wrapper">
+                <table id="portfoliosTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Project</th>
+                            <th>Owner</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Portfolio Form Modal -->
+        <div class="modal fade" id="portfolioModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="portfolioModalTitle">Add Portfolio Item</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="portfolioForm" novalidate>
+                        <input type="hidden" id="portfolioId" name="id">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="portfolioTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="portfolioTitle" name="title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="portfolioDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="portfolioDescription" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="portfolioImageUrl" class="form-label">Image URL</label>
+                                <input type="url" class="form-control" id="portfolioImageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectId" class="form-label">Associated Project</label>
+                                <select class="form-select" id="projectId" name="projectId">
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ownerId" class="form-label">Owner</label>
+                                <select class="form-select" id="portfolioOwnerId" name="ownerId">
+                                    <option value="">-- Select Owner --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Portfolio Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        $(document).ready(function() {
+            const table = $('#portfoliosTable').DataTable({
+                serverSide: true,
+                ajax: {
+                    url: '/api/portfolios',
+                    type: 'GET',
+                    data: function(d) {
+                        return {
+                            page: d.start / d.length,
+                            size: d.length,
+                            sort: 'createdAt',
+                            direction: 'desc'
+                        };
+                    },
+                    dataSrc: function(json) {
+                        json.recordsTotal = json.data.totalElements;
+                        json.recordsFiltered = json.data.totalElements;
+                        return json.data.content;
+                    }
+                },
+                columns: [
+                    { 
+                        data: 'imageUrl', 
+                        render: url => url ? `<img src="${url}" class="portfolio-img" onerror="this.src='https://via.placeholder.com/50'">` : `<img src="https://via.placeholder.com/50" class="portfolio-img">`,
+                        orderable: false,
+                        searchable: false
+                    },
+                    { data: 'title' },
+                    { data: 'description', render: d => d && d.length > 50 ? d.substring(0, 50) + '...' : d || '-' },
+                    { data: 'project', render: p => p ? p.name : '-' },
+                    { data: 'owner', render: o => o ? o.username : '-' },
+                    {
+                        data: null,
+                        render: d => `
+                            <button class="btn btn-sm btn-primary edit-btn" data-id="${d.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${d.id}"><i class="fas fa-trash"></i></button>
+                        `
+                    }
+                ]
+            });
+
+            // Load Projects for associated project dropdown
+            $.get('/api/projects?size=100', function(response) {
+                const select = $('#projectId');
+                response.data.content.forEach(p => {
+                    select.append(`<option value="${p.id}">${p.name}</option>`);
+                });
+            });
+
+            // Load Users for Owner dropdown
+            $.get('/api/users?size=100', function(response) {
+                const select = $('#portfolioOwnerId');
+                response.data.content.forEach(user => {
+                    select.append(`<option value="${user.id}">${user.username}</option>`);
+                });
+            });
+
+            $('#portfolioForm').submit(function(e) {
+                e.preventDefault();
+                const id = $('#portfolioId').val();
+                const data = {
+                    title: $('#portfolioTitle').val(),
+                    description: $('#portfolioDescription').val(),
+                    imageUrl: $('#portfolioImageUrl').val(),
+                    projectId: $('#projectId').val() || null,
+                    ownerId: $('#portfolioOwnerId').val() || null
+                };
+
+                $('#loadingOverlay').addClass('show');
+                const type = id ? 'PUT' : 'POST';
+                const url = id ? `/api/portfolios/${id}` : '/api/portfolios';
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function() {
+                        $('#portfolioModal').modal('hide');
+                        table.ajax.reload();
+                        alert('Portfolio item saved successfully');
+                    },
+                    error: function(err) { alert('Error saving portfolio item'); },
+                    complete: function() { $('#loadingOverlay').removeClass('show'); }
+                });
+            });
+
+            $('#portfoliosTable').on('click', '.edit-btn', function() {
+                const id = $(this).data('id');
+                $.get(`/api/portfolios/${id}`, function(response) {
+                    const p = response.data;
+                    $('#portfolioId').val(p.id);
+                    $('#portfolioTitle').val(p.title);
+                    $('#portfolioDescription').val(p.description);
+                    $('#portfolioImageUrl').val(p.imageUrl);
+                    $('#projectId').val(p.project ? p.project.id : '');
+                    $('#portfolioOwnerId').val(p.owner ? p.owner.id : '');
+                    $('#portfolioModalTitle').text('Edit Portfolio Item');
+                    $('#portfolioModal').modal('show');
+                });
+            });
+
+            $('#portfoliosTable').on('click', '.delete-btn', function() {
+                if (confirm('Are you sure you want to delete this portfolio item?')) {
+                    const id = $(this).data('id');
+                    $.ajax({
+                        url: `/api/portfolios/${id}`,
+                        type: 'DELETE',
+                        success: function() { table.ajax.reload(); },
+                        error: function() { alert('Error deleting portfolio item'); }
+                    });
+                }
+            });
+
+            $('#btnCreatePortfolio').click(function() {
+                $('#portfolioForm')[0].reset();
+                $('#portfolioId').val('');
+                $('#portfolioModalTitle').text('Add Portfolio Item');
+            });
+        });
+    </script>
+</body>
+</html>

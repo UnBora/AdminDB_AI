@@ -51,6 +51,17 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  # Mail Configuration (Dummy for development)
+  mail:
+    host: localhost
+    port: 25
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
 # Server Configuration
 server:
   port: 8080

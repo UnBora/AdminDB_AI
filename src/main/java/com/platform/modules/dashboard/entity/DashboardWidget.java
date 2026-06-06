@@ -13,7 +13,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class DashboardWidget extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

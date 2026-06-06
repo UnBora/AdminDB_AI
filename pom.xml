@@ -122,8 +122,8 @@
         <!-- HyperSQL for JSONB Type -->
         <dependency>
             <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-60</artifactId>
-            <version>3.7.0</version>
+            <artifactId>hypersistence-utils-hibernate-63</artifactId>
+            <version>3.8.3</version>
         </dependency>
 
         <!-- Spring Mail for SMTP -->

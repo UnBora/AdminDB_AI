@@ -22,7 +22,7 @@ public interface MenuPermissionRepository extends JpaRepository<MenuPermission, 
     @Query("SELECT CASE WHEN COUNT(mp) > 0 THEN true ELSE false END FROM MenuPermission mp WHERE mp.menu.id = :menuId AND mp.permission.id = :permissionId")
     boolean existsByMenuIdAndPermissionId(@Param("menuId") UUID menuId, @Param("permissionId") UUID permissionId);
 
-    @Query("SELECT mp FROM MenuPermission mp WHERE mp.permission.roles.id = :roleId")
+    @Query("SELECT mp FROM MenuPermission mp WHERE mp.permission IN (SELECT p FROM Role r JOIN r.permissions p WHERE r.id = :roleId)")
     List<MenuPermission> findByPermissionRoleId(@Param("roleId") UUID roleId);
 
     void deleteByMenuId(UUID menuId);

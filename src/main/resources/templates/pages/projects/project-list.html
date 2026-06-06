@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>Project Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.6/dataTables.bootstrap5.min.css">
+    <style>
+        .project-container { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .action-buttons { margin-bottom: 20px; display: flex; gap: 10px; }
+        .datatable-wrapper { background-color: white; border-radius: 5px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .status-active { background-color: #d1e7dd; color: #0f5132; }
+        .status-completed { background-color: #cfe2ff; color: #084298; }
+        .status-on-hold { background-color: #fff3cd; color: #664d03; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .loading-overlay.show { display: flex; }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid project-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-2">Project Management</h1>
+                    <p class="text-muted mb-0">Track and manage your enterprise projects</p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn btn-success" id="btnCreateProject" data-bs-toggle="modal" data-bs-target="#projectModal">
+                    <i class="fas fa-plus"></i> Create Project
+                </button>
+            </div>
+
+            <div class="datatable-wrapper">
+                <table id="projectsTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Owner</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Project Form Modal -->
+        <div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="projectModalTitle">Create Project</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="projectForm" novalidate>
+                        <input type="hidden" id="projectId" name="id">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="projectName" class="form-label">Project Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="projectName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="projectDescription" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectStatus" class="form-label">Status</label>
+                                <select class="form-select" id="projectStatus" name="status">
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="ON_HOLD">On Hold</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ownerId" class="form-label">Owner</label>
+                                <select class="form-select" id="ownerId" name="ownerId">
+                                    <option value="">-- Select Owner --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Project</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        $(document).ready(function() {
+            const table = $('#projectsTable').DataTable({
+                serverSide: true,
+                ajax: {
+                    url: '/api/projects',
+                    type: 'GET',
+                    data: function(d) {
+                        return {
+                            page: d.start / d.length,
+                            size: d.length,
+                            sort: 'createdAt',
+                            direction: 'desc'
+                        };
+                    },
+                    dataSrc: function(json) {
+                        json.recordsTotal = json.data.totalElements;
+                        json.recordsFiltered = json.data.totalElements;
+                        return json.data.content;
+                    }
+                },
+                columns: [
+                    { data: 'name' },
+                    { data: 'description', render: d => d && d.length > 50 ? d.substring(0, 50) + '...' : d || '-' },
+                    { data: 'status', render: s => `<span class="status-badge status-${(s || 'active').toLowerCase().replace('_', '-')}">${s || 'ACTIVE'}</span>` },
+                    { data: 'owner', render: o => o ? o.username : '-' },
+                    { data: 'createdAt', render: d => new Date(d).toLocaleDateString() },
+                    {
+                        data: null,
+                        render: d => `
+                            <button class="btn btn-sm btn-primary edit-btn" data-id="${d.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${d.id}"><i class="fas fa-trash"></i></button>
+                        `
+                    }
+                ]
+            });
+
+            // Load Users for Owner dropdown
+            $.get('/api/users?size=100', function(response) {
+                const select = $('#ownerId');
+                response.data.content.forEach(user => {
+                    select.append(`<option value="${user.id}">${user.username}</option>`);
+                });
+            });
+
+            $('#projectForm').submit(function(e) {
+                e.preventDefault();
+                const id = $('#projectId').val();
+                const data = {
+                    name: $('#projectName').val(),
+                    description: $('#projectDescription').val(),
+                    status: $('#projectStatus').val(),
+                    ownerId: $('#ownerId').val() || null
+                };
+
+                $('#loadingOverlay').addClass('show');
+                const type = id ? 'PUT' : 'POST';
+                const url = id ? `/api/projects/${id}` : '/api/projects';
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function() {
+                        $('#projectModal').modal('hide');
+                        table.ajax.reload();
+                        alert('Project saved successfully');
+                    },
+                    error: function(err) { alert('Error saving project'); },
+                    complete: function() { $('#loadingOverlay').removeClass('show'); }
+                });
+            });
+
+            $('#projectsTable').on('click', '.edit-btn', function() {
+                const id = $(this).data('id');
+                $.get(`/api/projects/${id}`, function(response) {
+                    const p = response.data;
+                    $('#projectId').val(p.id);
+                    $('#projectName').val(p.name);
+                    $('#projectDescription').val(p.description);
+                    $('#projectStatus').val(p.status);
+                    $('#ownerId').val(p.owner ? p.owner.id : '');
+                    $('#projectModalTitle').text('Edit Project');
+                    $('#projectModal').modal('show');
+                });
+            });
+
+            $('#projectsTable').on('click', '.delete-btn', function() {
+                if (confirm('Are you sure you want to delete this project?')) {
+                    const id = $(this).data('id');
+                    $.ajax({
+                        url: `/api/projects/${id}`,
+                        type: 'DELETE',
+                        success: function() { table.ajax.reload(); },
+                        error: function() { alert('Error deleting project'); }
+                    });
+                }
+            });
+
+            $('#btnCreateProject').click(function() {
+                $('#projectForm')[0].reset();
+                $('#projectId').val('');
+                $('#projectModalTitle').text('Create Project');
+            });
+        });
+    </script>
+</body>
+</html>

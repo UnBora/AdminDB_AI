@@ -14,7 +14,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Project extends BaseEntity {
 
     @Column(name = "name", nullable = false, length = 255)

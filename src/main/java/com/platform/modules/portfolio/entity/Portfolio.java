@@ -15,7 +15,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Portfolio extends BaseEntity {
 
     @Column(name = "title", nullable = false, length = 255)

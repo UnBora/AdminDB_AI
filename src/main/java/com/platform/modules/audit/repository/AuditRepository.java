@@ -50,4 +50,11 @@ public interface AuditRepository extends JpaRepository<AuditLog, UUID> {
     long countByUserId(UUID userId);
 
     long countByAction(AuditAction action);
+
+    long countByActionAndCreatedAtBetween(AuditAction action, LocalDateTime startDate, LocalDateTime endDate);
+
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT a.action, COUNT(a) FROM AuditLog a WHERE a.createdAt >= :startDate GROUP BY a.action")
+    List<Object[]> countActionsByTypeAfter(@Param("startDate") LocalDateTime startDate);
 }
