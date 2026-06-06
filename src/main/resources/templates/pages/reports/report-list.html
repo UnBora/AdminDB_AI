@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>Reports</title>
+</head>
+<body>
+<div layout:fragment="content" class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>Reports</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/reports/generate" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Generate Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="nameFilter" class="form-label">Report Name</label>
+                    <input type="text" class="form-control" id="nameFilter" name="name" placeholder="Search by name">
+                </div>
+                <div class="col-md-3">
+                    <label for="typeFilter" class="form-label">Type</label>
+                    <select class="form-select" id="typeFilter" name="type">
+                        <option value="">-- All Types --</option>
+                        <option th:each="type : ${reportTypes}" th:value="${type}" th:text="${type}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="formatFilter" class="form-label">Format</label>
+                    <select class="form-select" id="formatFilter" name="format">
+                        <option value="">-- All Formats --</option>
+                        <option th:each="format : ${reportFormats}" th:value="${format}" th:text="${format}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" id="filterBtn" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table id="reportsTable" class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Format</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsBody">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Loading reports...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav id="paginationContainer" class="mt-3" aria-label="Page navigation"></nav>
+
+    <!-- Report Detail Modal -->
+    <div class="modal fade" id="reportDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reportDetailBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+    <script th:inline="javascript">
+    let currentPage = [[${page}]] || 0;
+    let pageSize = [[${size}]] || 10;
+
+    $(document).ready(function() {
+        loadReports();
+
+        $('#filterBtn').click(function() {
+            currentPage = 0;
+            loadReports();
+        });
+    });
+
+    function loadReports() {
+        const name = $('#nameFilter').val();
+        const type = $('#typeFilter').val();
+        const format = $('#formatFilter').val();
+        
+        $.ajax({
+            url: '/api/reports',
+            method: 'GET',
+            data: {
+                name: name,
+                type: type,
+                format: format,
+                page: currentPage,
+                size: pageSize
+            },
+            success: function(response) {
+                renderReports(response.data);
+                renderPagination(response.data);
+            },
+            error: function() {
+                $('#reportsBody').html('<tr><td colspan="6" class="text-center text-danger">Error loading reports</td></tr>');
+            }
+        });
+    }
+
+    function renderReports(page) {
+        const tbody = $('#reportsBody');
+        tbody.empty();
+
+        if (!page.content || page.content.length === 0) {
+            tbody.append('<tr><td colspan="6" class="text-center">No reports found</td></tr>');
+            return;
+        }
+
+        page.content.forEach(function(report) {
+            const row = `
+                <tr>
+                    <td><strong>${escapeHtml(report.name)}</strong></td>
+                    <td>${escapeHtml(report.description.substring(0, 50))}</td>
+                    <td><span class="badge bg-info">${report.type}</span></td>
+                    <td><span class="badge bg-warning">${report.format}</span></td>
+                    <td>${new Date(report.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewReport('${report.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteReport('${report.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    function renderPagination(page) {
+        const container = $('#paginationContainer');
+        container.empty();
+
+        if (page.totalPages <= 1) return;
+
+        let html = '<ul class="pagination justify-content-center">';
+        
+        if (page.number > 0) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${page.number - 1})">Previous</a></li>`;
+        }
+
+        for (let i = 0; i < page.totalPages; i++) {
+            const active = i === page.number ? 'active' : '';
+            html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="goToPage(${i})">${i + 1}</a></li>`;
+        }
+
+        if (page.number < page.totalPages - 1) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${page.number + 1})">Next</a></li>`;
+        }
+
+        html += '</ul>';
+        container.html(html);
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadReports();
+        return false;
+    }
+
+    function viewReport(id) {
+        $.ajax({
+            url: `/api/reports/${id}`,
+            method: 'GET',
+            success: function(response) {
+                const report = response.data;
+                let html = `
+                    <dl class="row">
+                        <dt class="col-md-3">Name:</dt>
+                        <dd class="col-md-9">${escapeHtml(report.name)}</dd>
+                        <dt class="col-md-3">Description:</dt>
+                        <dd class="col-md-9">${escapeHtml(report.description)}</dd>
+                        <dt class="col-md-3">Type:</dt>
+                        <dd class="col-md-9"><span class="badge bg-info">${report.type}</span></dd>
+                        <dt class="col-md-3">Format:</dt>
+                        <dd class="col-md-9"><span class="badge bg-warning">${report.format}</span></dd>
+                        <dt class="col-md-3">Created:</dt>
+                        <dd class="col-md-9">${new Date(report.createdAt).toLocaleString()}</dd>
+                    </dl>
+                `;
+                $('#reportDetailBody').html(html);
+                $('#exportBtn').attr('onclick', `exportReport('${id}', '${report.format.toLowerCase()}')`);
+                new bootstrap.Modal('#reportDetailModal').show();
+            }
+        });
+    }
+
+    function exportReport(id, format) {
+        window.location.href = `/api/reports/${id}/export/${format}`;
+    }
+
+    function deleteReport(id) {
+        if (!confirm('Are you sure you want to delete this report?')) return;
+        
+        $.ajax({
+            url: `/api/reports/${id}`,
+            method: 'DELETE',
+            success: function() {
+                showNotification('Report deleted successfully', 'success');
+                loadReports();
+            },
+            error: function() {
+                showNotification('Error deleting report', 'error');
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    </script>
+</div>
+</body>
+</html>

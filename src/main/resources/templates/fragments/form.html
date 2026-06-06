@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Form Component
+    
+    Usage for form-group:
+    <div th:insert="fragments/form :: form-group(
+        fieldName='username', 
+        labelKey='user.username',
+        type='text',
+        value=user.username,
+        required=true,
+        errors=errors)"
+    ></div>
+    
+    Usage for form-input (individual input without wrapper):
+    <div th:insert="fragments/form :: form-input(
+        fieldName='email',
+        type='email',
+        value=user.email,
+        placeholder='user.email.placeholder')"
+    ></div>
+-->
+
+<!-- Complete form group with label, input, and error message -->
+<div th:fragment="form-group(fieldName, labelKey, type, value, required, errors, placeholder)"
+     class="mb-3">
+    
+    <label th:for="${fieldName}" class="form-label">
+        <span th:text="#{${labelKey}}"></span>
+        <span th:if="${required}" class="text-danger" title="Required">*</span>
+    </label>
+
+    <!-- Text/Email/Password Input -->
+    <input th:if="${type == 'text' or type == 'email' or type == 'password' or type == 'number'}"
+           th:type="${type}"
+           th:id="${fieldName}"
+           th:name="${fieldName}"
+           th:value="${value}"
+           th:required="${required}"
+           th:placeholder="${placeholder != null ? #{placeholder} : ''}"
+           class="form-control"
+           th:classappend="${errors != null and errors.hasFieldErrors(fieldName) ? 'is-invalid' : ''}"
+           aria-label="#{${labelKey}}" />
+
+    <!-- Textarea -->
+    <textarea th:if="${type == 'textarea'}"
+              th:id="${fieldName}"
+              th:name="${fieldName}"
+              th:required="${required}"
+              class="form-control"
+              th:classappend="${errors != null and errors.hasFieldErrors(fieldName) ? 'is-invalid' : ''}"
+              rows="4"
+              aria-label="#{${labelKey}}"
+              th:text="${value}"></textarea>
+
+    <!-- Select/Dropdown -->
+    <select th:if="${type == 'select'}"
+            th:id="${fieldName}"
+            th:name="${fieldName}"
+            th:required="${required}"
+            class="form-select"
+            th:classappend="${errors != null and errors.hasFieldErrors(fieldName) ? 'is-invalid' : ''}"
+            aria-label="#{${labelKey}}">
+        <option value="" th:text="#{form.select-option}"></option>
+        <option th:each="option : ${options}" 
+                th:value="${option.id}"
+                th:text="${option.name}"
+                th:selected="${value != null and value.equals(option.id)}"></option>
+    </select>
+
+    <!-- Checkbox -->
+    <div th:if="${type == 'checkbox'}" class="form-check">
+        <input th:id="${fieldName}"
+               type="checkbox"
+               th:name="${fieldName}"
+               th:value="true"
+               th:checked="${value}"
+               class="form-check-input"
+               aria-label="#{${labelKey}}" />
+        <label th:for="${fieldName}" class="form-check-label">
+            <span th:text="#{${labelKey}}"></span>
+        </label>
+    </div>
+
+    <!-- Error Messages -->
+    <div th:if="${errors != null and errors.hasFieldErrors(fieldName)}"
+         class="invalid-feedback d-block"
+         role="alert">
+        <span th:each="error : ${errors.getFieldErrors(fieldName)}"
+              th:text="${error.defaultMessage}"></span>
+    </div>
+    
+    <!-- Help Text -->
+    <small th:if="${helpKey != null}" class="form-text text-muted d-block mt-1">
+        <span th:text="#{${helpKey}}"></span>
+    </small>
+</div>
+
+<!-- Individual form input (without label wrapper) -->
+<div th:fragment="form-input(fieldName, type, value, required, placeholder, disabled)"
+     class="mb-3">
+    
+    <input th:type="${type != null ? type : 'text'}"
+           th:id="${fieldName}"
+           th:name="${fieldName}"
+           th:value="${value}"
+           th:required="${required}"
+           th:disabled="${disabled}"
+           th:placeholder="${placeholder != null ? #{placeholder} : ''}"
+           class="form-control"
+           aria-label="${fieldName}" />
+</div>
+
+<!-- Horizontal Form Layout (responsive) -->
+<div th:fragment="form-group-horizontal(fieldName, labelKey, type, value, required, errors, colLabel, colInput)"
+     class="row mb-3">
+    
+    <label th:for="${fieldName}" 
+           th:classappend="${colLabel != null ? colLabel : 'col-sm-3'}"
+           class="col-form-label">
+        <span th:text="#{${labelKey}}"></span>
+        <span th:if="${required}" class="text-danger" title="Required">*</span>
+    </label>
+
+    <div th:classappend="${colInput != null ? colInput : 'col-sm-9'}">
+        <input th:if="${type == 'text' or type == 'email' or type == 'password' or type == 'number'}"
+               th:type="${type}"
+               th:id="${fieldName}"
+               th:name="${fieldName}"
+               th:value="${value}"
+               th:required="${required}"
+               class="form-control"
+               th:classappend="${errors != null and errors.hasFieldErrors(fieldName) ? 'is-invalid' : ''}" />
+
+        <textarea th:if="${type == 'textarea'}"
+                  th:id="${fieldName}"
+                  th:name="${fieldName}"
+                  th:required="${required}"
+                  class="form-control"
+                  th:classappend="${errors != null and errors.hasFieldErrors(fieldName) ? 'is-invalid' : ''}"
+                  rows="4"
+                  th:text="${value}"></textarea>
+
+        <div th:if="${errors != null and errors.hasFieldErrors(fieldName)}"
+             class="invalid-feedback d-block">
+            <span th:each="error : ${errors.getFieldErrors(fieldName)}"
+                  th:text="${error.defaultMessage}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Form Actions (submit, reset, cancel) -->
+<div th:fragment="form-actions(submitText, submitUrl, showReset, showCancel, cancelUrl)"
+     class="mb-3">
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg"></i>
+            <span th:text="${submitText != null ? submitText : #{form.submit}}"></span>
+        </button>
+        
+        <button th:if="${showReset}" type="reset" class="btn btn-secondary">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span th:text="#{form.reset}"></span>
+        </button>
+        
+        <a th:if="${showCancel}" 
+           th:href="${cancelUrl}"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg"></i>
+            <span th:text="#{form.cancel}"></span>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

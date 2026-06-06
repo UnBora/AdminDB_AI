@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+
+<head>
+    <title>Notifications</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">Notifications</h1>
+                <p class="text-muted small">Manage your notifications</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-secondary" id="markAllReadBtn">
+                    <i class="bi bi-check-all"></i> Mark All Read
+                </button>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="notificationTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Message</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th style="width: 80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notificationTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0" id="paginationNav"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadNotifications(page = 1) {
+            const params = new URLSearchParams({ pageNumber: page, pageSize: 20 });
+            AjaxHelper.get(`/api/notifications?${params}`)
+                .then(response => {
+                    if (response.success) {
+                        renderTable(response.data);
+                        renderPagination(response.data);
+                    }
+                })
+                .catch(error => NotificationHandler.error('Error: ' + error.message));
+        }
+
+        function renderTable(pagination) {
+            const tbody = document.getElementById('notificationTableBody');
+            tbody.innerHTML = '';
+
+            if (!pagination.content?.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No notifications</td></tr>';
+                return;
+            }
+
+            pagination.content.forEach(notif => {
+                const row = document.createElement('tr');
+                row.className = notif.read ? '' : 'table-active';
+                row.innerHTML = `
+                    <td>${notif.title}</td>
+                    <td>${notif.message}</td>
+                    <td><span class="badge bg-${getColor(notif.type)}">${notif.type}</span></td>
+                    <td><small>${new Date(notif.createdAt).toLocaleString()}</small></td>
+                    <td>${notif.read ? 'Read' : '<span class="badge bg-warning">Unread</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteNotif('${notif.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderPagination(pagination) {
+            const nav = document.getElementById('paginationNav');
+            nav.innerHTML = '';
+            
+            if (pagination.pageNumber > 1) {
+                nav.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadNotifications(${pagination.pageNumber - 1})">Previous</a></li>`;
+            }
+            
+            nav.innerHTML += `<li class="page-item active"><span class="page-link">${pagination.pageNumber} / ${pagination.totalPages || 1}</span></li>`;
+            
+            if (pagination.pageNumber < (pagination.totalPages || 1)) {
+                nav.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadNotifications(${pagination.pageNumber + 1})">Next</a></li>`;
+            }
+        }
+
+        function deleteNotif(id) {
+            if (!confirm('Delete this notification?')) return;
+            AjaxHelper.delete(`/api/notifications/${id}`)
+                .then(response => {
+                    if (response.success) {
+                        NotificationHandler.success('Deleted');
+                        loadNotifications();
+                    }
+                })
+                .catch(error => NotificationHandler.error('Error: ' + error.message));
+        }
+
+        function getColor(type) {
+            const colors = { 'INFO': 'info', 'WARNING': 'warning', 'ERROR': 'danger', 'SUCCESS': 'success' };
+            return colors[type] || 'secondary';
+        }
+
+        document.getElementById('markAllReadBtn').addEventListener('click', () => {
+            AjaxHelper.put('/api/notifications/mark-all-read', {})
+                .then(response => {
+                    NotificationHandler.success('Marked all as read');
+                    loadNotifications();
+                })
+                .catch(error => NotificationHandler.error('Error: ' + error.message));
+        });
+
+        loadNotifications();
+    </script>
+</div>
+</body>
+</html>

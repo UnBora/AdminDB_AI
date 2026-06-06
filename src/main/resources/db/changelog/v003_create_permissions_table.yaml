@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: v003_create_permissions_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: permissions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: module
+                  type: varchar(100)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: permissions
+            indexName: idx_permissions_name
+            columns:
+              - column:
+                  name: name
+
+        - createIndex:
+            tableName: permissions
+            indexName: idx_permissions_module
+            columns:
+              - column:
+                  name: module

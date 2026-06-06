@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: v014_create_portfolios_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: portfolios
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: image_url
+                  type: varchar(500)
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_portfolios_project
+                    references: projects(id)
+              - column:
+                  name: owner_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_portfolios_owner
+                    references: users(id)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: portfolios
+            indexName: idx_portfolios_project_id
+            columns:
+              - column:
+                  name: project_id
+
+        - createIndex:
+            tableName: portfolios
+            indexName: idx_portfolios_owner_id
+            columns:
+              - column:
+                  name: owner_id

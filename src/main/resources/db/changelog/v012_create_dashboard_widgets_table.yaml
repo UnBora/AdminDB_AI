@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: v012_create_dashboard_widgets_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: dashboard_widgets
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_dashboard_widgets_user
+                    references: users(id)
+              - column:
+                  name: widget_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: widget_title
+                  type: varchar(255)
+              - column:
+                  name: position
+                  type: integer
+              - column:
+                  name: visible
+                  type: boolean
+                  defaultValue: true
+              - column:
+                  name: configuration
+                  type: jsonb
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: dashboard_widgets
+            indexName: idx_dashboard_widgets_user_id
+            columns:
+              - column:
+                  name: user_id

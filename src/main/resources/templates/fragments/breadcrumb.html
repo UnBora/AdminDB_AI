@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Breadcrumb Navigation Component
+    
+    Usage with static items:
+    <nav th:insert="fragments/breadcrumb :: breadcrumb(
+        items=breadcrumbs)"
+    ></nav>
+    
+    Where breadcrumbs is a list of objects with:
+    - name: Display text (or nameKey for i18n)
+    - url: Link URL (omit for current page)
+    - icon: Bootstrap icon class (optional)
+    
+    Example from controller:
+    List<Map<String, String>> breadcrumbs = new ArrayList<>();
+    breadcrumbs.add(Map.of("nameKey", "nav.home", "url", "/"));
+    breadcrumbs.add(Map.of("nameKey", "nav.users", "url", "/users"));
+    breadcrumbs.add(Map.of("name", "Edit User", "nameKey", "user.edit"));
+    
+    Parameters:
+    - items: List of breadcrumb items
+    - showHome: Boolean - add home link as first item (default: false)
+    - homeUrl: URL for home link (default: '/')
+    - homeIcon: Bootstrap icon for home (default: 'bi-house-fill')
+-->
+
+<!-- Main Breadcrumb Component -->
+<nav th:fragment="breadcrumb(items, showHome, homeUrl, homeIcon)"
+     aria-label="breadcrumb"
+     th:if="${items != null or showHome}">
+    
+    <ol class="breadcrumb mb-0">
+        <!-- Home Link (optional) -->
+        <li th:if="${showHome}" class="breadcrumb-item">
+            <a th:href="${homeUrl != null ? homeUrl : '/'}"
+               class="text-decoration-none">
+                <i th:class="${homeIcon != null ? homeIcon : 'bi-house-fill'}" class="bi"></i>
+                <span class="d-none d-sm-inline ms-1" th:text="#{nav.home}"></span>
+            </a>
+        </li>
+
+        <!-- Breadcrumb Items -->
+        <li th:each="item,iterStat : ${items}"
+            class="breadcrumb-item"
+            th:classappend="${iterStat.last ? 'active' : ''}"
+            th:attr="aria-current=${iterStat.last ? 'page' : ''}">
+            
+            <!-- Link (if not last item) -->
+            <a th:if="${!iterStat.last and item.url != null}"
+               th:href="${item.url}"
+               class="text-decoration-none">
+                <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi me-1"></i>
+                <span th:if="${item.nameKey != null}"
+                      th:text="#{${item.nameKey}}"></span>
+                <span th:if="${item.name != null and item.nameKey == null}"
+                      th:text="${item.name}"></span>
+            </a>
+
+            <!-- Current Page (no link) -->
+            <span th:if="${iterStat.last}">
+                <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi me-1"></i>
+                <span th:if="${item.nameKey != null}"
+                      th:text="#{${item.nameKey}}"></span>
+                <span th:if="${item.name != null and item.nameKey == null}"
+                      th:text="${item.name}"></span>
+            </span>
+        </li>
+    </ol>
+</nav>
+
+<!-- Compact Breadcrumb (for mobile) -->
+<nav th:fragment="breadcrumb-compact(items, showHome, homeUrl)"
+     aria-label="breadcrumb"
+     class="d-md-none"
+     th:if="${items != null or showHome}">
+    
+    <div class="btn-group btn-group-sm" role="group">
+        <a th:if="${showHome}"
+           th:href="${homeUrl != null ? homeUrl : '/'}"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-house-fill"></i>
+        </a>
+
+        <a th:each="item : ${items}"
+           th:if="${item.url != null}"
+           th:href="${item.url}"
+           class="btn btn-outline-secondary"
+           th:title="${item.nameKey != null ? #{item.nameKey} : item.name}">
+            <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi"></i>
+        </a>
+
+        <span th:if="${items != null and items.size() > 0}"
+              class="btn btn-outline-secondary disabled">
+            <i th:if="${items.last().icon != null}" th:class="${items.last().icon}" class="bi"></i>
+            <span class="ms-1" th:if="${items.last().nameKey != null}"
+                  th:text="#{${items.last().nameKey}}"></span>
+            <span class="ms-1" th:if="${items.last().name != null and items.last().nameKey == null}"
+                  th:text="${items.last().name}"></span>
+        </span>
+    </div>
+</nav>
+
+<!-- Breadcrumb with Dropdown (for deep hierarchies) -->
+<nav th:fragment="breadcrumb-dropdown(items, showHome, homeUrl, maxVisible)"
+     aria-label="breadcrumb"
+     th:if="${items != null or showHome}">
+    
+    <ol class="breadcrumb mb-0">
+        <!-- Home Link -->
+        <li th:if="${showHome}" class="breadcrumb-item">
+            <a th:href="${homeUrl != null ? homeUrl : '/'}"
+               class="text-decoration-none">
+                <i class="bi bi-house-fill"></i>
+            </a>
+        </li>
+
+        <!-- Hidden Items in Dropdown (if exceeds maxVisible) -->
+        <li th:if="${items != null and items.size() > (maxVisible != null ? maxVisible : 3)}"
+            class="breadcrumb-item">
+            <div class="dropdown">
+                <a href="#" class="text-decoration-none" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                </a>
+                <ul class="dropdown-menu">
+                    <li th:each="item,iterStat : ${#lists.subList(items, 0, items.size() - (maxVisible != null ? maxVisible : 3))}">
+                        <a th:href="${item.url}" class="dropdown-item">
+                            <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi me-1"></i>
+                            <span th:if="${item.nameKey != null}"
+                                  th:text="#{${item.nameKey}}"></span>
+                            <span th:if="${item.name != null and item.nameKey == null}"
+                                  th:text="${item.name}"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+
+        <!-- Last N Items (where N = maxVisible) -->
+        <li th:each="item,iterStat : ${#lists.subList(items, #numbers.max(0, items.size() - (maxVisible != null ? maxVisible : 3)), items.size())}"
+            class="breadcrumb-item"
+            th:classappend="${iterStat.last ? 'active' : ''}">
+            
+            <a th:if="${!iterStat.last and item.url != null}"
+               th:href="${item.url}"
+               class="text-decoration-none">
+                <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi me-1"></i>
+                <span th:if="${item.nameKey != null}"
+                      th:text="#{${item.nameKey}}"></span>
+                <span th:if="${item.name != null and item.nameKey == null}"
+                      th:text="${item.name}"></span>
+            </a>
+
+            <span th:if="${iterStat.last}">
+                <i th:if="${item.icon != null}" th:class="${item.icon}" class="bi me-1"></i>
+                <span th:if="${item.nameKey != null}"
+                      th:text="#{${item.nameKey}}"></span>
+                <span th:if="${item.name != null and item.nameKey == null}"
+                      th:text="${item.name}"></span>
+            </span>
+        </li>
+    </ol>
+</nav>
+
+</body>
+</html>

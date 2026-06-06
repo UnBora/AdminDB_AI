@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: v015_create_menu_permissions_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: menu_permissions
+            columns:
+              - column:
+                  name: menu_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_menu_permissions_menu
+                    references: menus(id)
+              - column:
+                  name: permission_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_menu_permissions_permission
+                    references: permissions(id)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - addPrimaryKey:
+            tableName: menu_permissions
+            columnNames: menu_id, permission_id
+            constraintName: pk_menu_permissions
+
+        - createIndex:
+            tableName: menu_permissions
+            indexName: idx_menu_permissions_menu_id
+            columns:
+              - column:
+                  name: menu_id
+
+        - createIndex:
+            tableName: menu_permissions
+            indexName: idx_menu_permissions_permission_id
+            columns:
+              - column:
+                  name: permission_id

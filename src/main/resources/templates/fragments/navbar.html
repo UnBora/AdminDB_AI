@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Enhanced Navbar Component
+    
+    Usage:
+    <nav th:insert="fragments/navbar :: navbar-updated(
+        appName='Admin Dashboard',
+        currentUser=user,
+        notifications=notificationCount,
+        currentLanguage='en',
+        showThemeToggle=true,
+        showLanguageSelector=true)"
+    ></nav>
+    
+    Parameters:
+    - appName: Application name/title
+    - currentUser: Current user object (with properties: name, email, avatar)
+    - notifications: Unread notification count (optional)
+    - currentLanguage: Current language code (default: 'en')
+    - showThemeToggle: Boolean - show dark/light mode toggle (default: true)
+    - showLanguageSelector: Boolean - show language selector (default: true)
+    - showNotifications: Boolean - show notifications bell (default: true)
+-->
+
+<nav th:fragment="navbar-updated(appName, currentUser, notifications, currentLanguage, showThemeToggle, showLanguageSelector, showNotifications)"
+     class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top"
+     style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-speedometer2 me-2"></i>
+            <span th:text="${appName != null ? appName : 'Admin Dashboard'}"></span>
+        </a>
+
+        <!-- Navbar Toggler for Mobile -->
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarContent"
+                aria-controls="navbarContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav ms-auto d-flex align-items-center gap-2">
+                
+                <!-- Notifications Bell -->
+                <li th:if="${showNotifications != false}" class="nav-item dropdown">
+                    <a class="nav-link position-relative"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false"
+                       title="Notifications">
+                        <i class="bi bi-bell-fill"></i>
+                        <span th:if="${notifications != null and notifications > 0}"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            <span th:text="${notifications}"></span>
+                            <span class="visually-hidden" th:text="#{navbar.new-notifications}"></span>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li th:if="${notifications != null and notifications > 0}">
+                            <h6 class="dropdown-header">
+                                <span th:text="#{navbar.notifications}"></span>
+                            </h6>
+                        </li>
+                        <li th:if="${notifications == null or notifications == 0}">
+                            <span class="dropdown-item-text text-muted">
+                                <i class="bi bi-inbox"></i>
+                                <span th:text="#{navbar.no-notifications}"></span>
+                            </span>
+                        </li>
+                        <li th:if="${notifications != null and notifications > 0}">
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/notifications">
+                                <i class="bi bi-arrow-right"></i>
+                                <span th:text="#{navbar.view-all}"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Divider -->
+                <li class="nav-item" th:if="${showThemeToggle != false or showLanguageSelector != false}">
+                    <hr class="dropdown-divider my-2 d-lg-none">
+                </li>
+
+                <!-- Language Selector -->
+                <li th:if="${showLanguageSelector != false}" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false"
+                       title="Language">
+                        <i class="bi bi-globe"></i>
+                        <span class="d-none d-lg-inline ms-1">
+                            <span th:text="${currentLanguage != null ? currentLanguage.toUpperCase() : 'EN'}"></span>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="?lang=en">
+                                <span class="fi fi-gb me-2"></span>
+                                <span th:text="#{language.english}">English</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?lang=es">
+                                <span class="fi fi-es me-2"></span>
+                                <span th:text="#{language.spanish}">Spanish</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?lang=fr">
+                                <span class="fi fi-fr me-2"></span>
+                                <span th:text="#{language.french}">French</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?lang=de">
+                                <span class="fi fi-de me-2"></span>
+                                <span th:text="#{language.german}">German</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Theme Toggle (Dark/Light) -->
+                <li th:if="${showThemeToggle != false}" class="nav-item">
+                    <button class="btn btn-link nav-link"
+                            id="themeToggle"
+                            title="Toggle theme"
+                            aria-label="Toggle dark mode">
+                        <i class="bi bi-moon-stars-fill"></i>
+                    </button>
+                </li>
+
+                <!-- Divider before User Menu -->
+                <li class="nav-item">
+                    <hr class="dropdown-divider my-2 d-lg-none">
+                </li>
+
+                <!-- User Menu -->
+                <li th:if="${currentUser != null}" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <!-- User Avatar -->
+                        <img th:if="${currentUser.avatar != null}"
+                             th:src="${currentUser.avatar}"
+                             alt="Avatar"
+                             class="rounded-circle"
+                             style="width: 32px; height: 32px; object-fit: cover;">
+                        <div th:unless="${currentUser.avatar != null}"
+                             class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                             style="width: 32px; height: 32px;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <span class="d-none d-lg-inline-block">
+                            <span th:text="${currentUser.name}"></span>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <h6 class="dropdown-header">
+                                <span th:text="#{navbar.hello}"></span>
+                                <strong th:text="${currentUser.name}"></strong>
+                            </h6>
+                        </li>
+                        <li class="small text-muted px-3 py-1">
+                            <span th:text="${currentUser.email}"></span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/profile">
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span th:text="#{navbar.profile}"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/settings">
+                                <i class="bi bi-gear me-2"></i>
+                                <span th:text="#{navbar.settings}"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/help">
+                                <i class="bi bi-question-circle me-2"></i>
+                                <span th:text="#{navbar.help}"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form method="post" action="/logout" class="d-inline">
+                                <button type="submit" class="dropdown-item" style="cursor: pointer;">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    <span th:text="#{navbar.logout}"></span>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Login Link (if no user) -->
+                <li th:unless="${currentUser != null}" class="nav-item">
+                    <a class="btn btn-primary btn-sm" href="/login">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>
+                        <span th:text="#{navbar.login}"></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Theme Toggle Script -->
+<script th:fragment="theme-toggle-script">
+document.addEventListener('DOMContentLoaded', function() {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        updateTheme(currentTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            updateTheme(newTheme);
+        });
+    }
+    
+    function updateTheme(theme) {
+        const htmlElement = document.documentElement;
+        if (theme === 'dark') {
+            htmlElement.setAttribute('data-bs-theme', 'dark');
+            themeToggle.querySelector('i').className = 'bi bi-sun-fill';
+        } else {
+            htmlElement.setAttribute('data-bs-theme', 'light');
+            themeToggle.querySelector('i').className = 'bi bi-moon-stars-fill';
+        }
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+databaseChangeLog:
+  - changeSet:
+      id: v011_create_file_metadata_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: file_metadata
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: file_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_path
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_size
+                  type: bigint
+              - column:
+                  name: file_type
+                  type: varchar(100)
+              - column:
+                  name: mime_type
+                  type: varchar(100)
+              - column:
+                  name: uploaded_by
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_file_metadata_user
+                    references: users(id)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: file_metadata
+            indexName: idx_file_metadata_uploaded_by
+            columns:
+              - column:
+                  name: uploaded_by
+
+        - createIndex:
+            tableName: file_metadata
+            indexName: idx_file_metadata_created_at
+            columns:
+              - column:
+                  name: created_at

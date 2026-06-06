@@ -1,0 +1,74 @@
+databaseChangeLog:
+  - changeSet:
+      id: v009_create_notifications_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: notifications
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_notifications_user
+                    references: users(id)
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message
+                  type: text
+              - column:
+                  name: read
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: notifications
+            indexName: idx_notifications_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: notifications
+            indexName: idx_notifications_read
+            columns:
+              - column:
+                  name: read

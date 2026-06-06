@@ -1,0 +1,75 @@
+databaseChangeLog:
+  - changeSet:
+      id: v007_create_translations_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: translations
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: locale
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: translation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: translation_value
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: varchar(100)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: translations
+            indexName: idx_translations_locale_key
+            columns:
+              - column:
+                  name: locale
+              - column:
+                  name: translation_key
+
+        - createIndex:
+            tableName: translations
+            indexName: idx_translations_category
+            columns:
+              - column:
+                  name: category
+
+        - addUniqueConstraint:
+            tableName: translations
+            columnNames: locale, translation_key
+            constraintName: uk_translations_locale_key

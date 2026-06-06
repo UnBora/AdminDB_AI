@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Loading Spinner Component
+    
+    Usage for border spinner:
+    <div th:insert="fragments/spinner :: spinner(
+        size='medium',
+        text='Loading...')"
+    ></div>
+    
+    Usage for growing spinner:
+    <div th:insert="fragments/spinner :: spinner-grow(
+        size='small',
+        color='primary')"
+    ></div>
+    
+    Usage for inline spinner:
+    <button disabled>
+        <div th:insert="fragments/spinner :: spinner-inline(
+            size='small',
+            color='light')"
+        ></div>
+        Processing...
+    </button>
+    
+    Parameters:
+    - size: 'small', 'medium', 'large' (default: medium)
+    - text: Optional text to display below/beside spinner
+    - textPosition: 'bottom', 'inline' (default: bottom)
+    - color: Bootstrap color class: 'primary', 'secondary', 'danger', 'warning', 'info', 'light', etc.
+    - overlay: Boolean - show semi-transparent overlay behind spinner
+-->
+
+<!-- Border Spinner (rotating) -->
+<div th:fragment="spinner(size, text, textPosition, color, overlay)"
+     class="d-flex flex-column align-items-center justify-content-center"
+     th:classappend="${overlay ? 'position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex' : ''}">
+    
+    <!-- Overlay backdrop (optional) -->
+    <div th:if="${overlay}" style="z-index: 999;"></div>
+
+    <!-- Spinner Container -->
+    <div class="spinner-container" th:classappend="${textPosition == 'inline' ? 'd-flex align-items-center gap-3' : ''}">
+        <div class="spinner-border"
+             th:classappend="
+                (size == 'small' ? 'spinner-border-sm' : ''),
+                (size == 'large' ? 'spinner-border-lg' : ''),
+                (color != null ? 'text-' + color : 'text-primary')"
+             role="status"
+             aria-label="Loading">
+            <span class="visually-hidden" th:text="#{spinner.loading}"></span>
+        </div>
+
+        <!-- Loading Text -->
+        <div th:if="${text != null}" 
+             th:classappend="${textPosition != 'inline' ? 'mt-3' : ''}"
+             class="text-center">
+            <span th:if="${text.startsWith('{') and text.endsWith('}')}"
+                  th:text="#{${text.substring(1, text.length() - 1)}}"></span>
+            <span th:unless="${text.startsWith('{') and text.endsWith('}')}"
+                  th:text="${text}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Growing Spinner (pulsing) -->
+<div th:fragment="spinner-grow(size, color, text, overlay)"
+     class="d-flex flex-column align-items-center justify-content-center"
+     th:classappend="${overlay ? 'position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex' : ''}">
+    
+    <div class="spinner-grow"
+         th:classappend="
+            (size == 'small' ? 'spinner-grow-sm' : ''),
+            (color != null ? 'text-' + color : 'text-primary')"
+         role="status"
+         aria-label="Loading">
+        <span class="visually-hidden" th:text="#{spinner.loading}"></span>
+    </div>
+
+    <div th:if="${text != null}" class="mt-3 text-center">
+        <span th:if="${text.startsWith('{') and text.endsWith('}')}"
+              th:text="#{${text.substring(1, text.length() - 1)}}"></span>
+        <span th:unless="${text.startsWith('{') and text.endsWith('}')}"
+              th:text="${text}"></span>
+    </div>
+</div>
+
+<!-- Inline Spinner (for buttons, badges, etc.) -->
+<div th:fragment="spinner-inline(size, color)"
+     class="spinner-border spinner-border-sm d-inline-block"
+     th:classappend="
+        (size == 'small' ? 'spinner-border-sm' : ''),
+        (color != null ? 'text-' + color : 'text-primary')"
+     role="status"
+     style="width: 1rem; height: 1rem;">
+    <span class="visually-hidden" th:text="#{spinner.loading}"></span>
+</div>
+
+<!-- Multiple Dots Spinner -->
+<div th:fragment="spinner-dots(size, color)"
+     class="d-flex gap-2 justify-content-center align-items-center">
+    
+    <span th:each="i : ${#numbers.sequence(1, 3)}"
+          class="d-inline-block rounded-circle"
+          th:classappend="
+            (size == 'small' ? 'p-1' : (size == 'large' ? 'p-3' : 'p-2')),
+            (color != null ? 'bg-' + color : 'bg-primary')"
+          style="animation: pulse 1.5s infinite;"
+          th:style="${'animation-delay: ' + (i * 0.2) + 's;'}"></span>
+</div>
+
+<!-- Bar Spinner (horizontal loading) -->
+<div th:fragment="spinner-bar(color, height)"
+     class="progress"
+     th:style="${height != null ? 'height: ' + height : 'height: 4px;'}"
+     role="progressbar"
+     aria-valuenow="0"
+     aria-valuemin="0"
+     aria-valuemax="100">
+    <div class="progress-bar"
+         th:classappend="${color != null ? 'bg-' + color : 'bg-primary'}"
+         style="animation: progress 2s infinite;"
+         role="progressbar"
+         style="width: 0%"></div>
+</div>
+
+<!-- Skeleton Loader (content placeholder) -->
+<div th:fragment="skeleton(height, width, rounded, animated)"
+     class="bg-light border"
+     th:classappend="${rounded ? 'rounded' : ''} ${animated ? 'skeleton-animated' : ''}"
+     th:style="${(height != null ? 'height: ' + height + ';' : '') + (width != null ? 'width: ' + width + ';' : '')}">
+    <!-- Placeholder content -->
+</div>
+
+<!-- Multiple Skeleton Lines -->
+<div th:fragment="skeleton-text(lines, height, width, animated)"
+     class="space-y-2">
+    <div th:each="i : ${#numbers.sequence(1, lines != null ? lines : 3)}"
+         th:insert="fragments/spinner :: skeleton(
+            height=height != null ? height : '20px',
+            width=width != null ? width : '100%',
+            rounded=false,
+            animated=animated)"
+    ></div>
+</div>
+
+<!-- CSS for animations -->
+<style>
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+@keyframes progress {
+    0% {
+        width: 0%;
+        left: 0;
+    }
+    50% {
+        width: 100%;
+    }
+    100% {
+        width: 100%;
+        left: 100%;
+    }
+}
+
+.skeleton-animated {
+    background: linear-gradient(90deg, #f5f5f5 25%, #e0e0e0 50%, #f5f5f5 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 2s infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+</style>
+
+</body>
+</html>

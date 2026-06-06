@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Reusable Form Field Component
+     Usage:
+     <div th:insert="components/form-field :: text-input(name='username', label='Username', value='', placeholder='Enter username')"></div>
+-->
+
+<div th:fragment="text-input(name, label, value, placeholder)" class="mb-3">
+    <label class="form-label" th:for="${name}" th:text="${label}"></label>
+    <input type="text" class="form-control" th:id="${name}" th:name="${name}" 
+           th:value="${value}" th:placeholder="${placeholder}">
+</div>
+
+<div th:fragment="email-input(name, label, value, placeholder)" class="mb-3">
+    <label class="form-label" th:for="${name}" th:text="${label}"></label>
+    <input type="email" class="form-control" th:id="${name}" th:name="${name}" 
+           th:value="${value}" th:placeholder="${placeholder}">
+</div>
+
+<div th:fragment="password-input(name, label, placeholder)" class="mb-3">
+    <label class="form-label" th:for="${name}" th:text="${label}"></label>
+    <input type="password" class="form-control" th:id="${name}" th:name="${name}" 
+           th:placeholder="${placeholder}">
+</div>
+
+<div th:fragment="select(name, label, options, selected)" class="mb-3">
+    <label class="form-label" th:for="${name}" th:text="${label}"></label>
+    <select class="form-select" th:id="${name}" th:name="${name}">
+        <option value="">-- Select --</option>
+        <option th:each="option : ${options}" 
+                th:value="${option.id}" 
+                th:text="${option.name}"
+                th:selected="${option.id == selected}"></option>
+    </select>
+</div>
+
+<div th:fragment="checkbox(name, label, checked)" class="mb-3 form-check">
+    <input type="checkbox" class="form-check-input" th:id="${name}" th:name="${name}" 
+           th:checked="${checked}">
+    <label class="form-check-label" th:for="${name}" th:text="${label}"></label>
+</div>

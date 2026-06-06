@@ -1,0 +1,116 @@
+databaseChangeLog:
+  - changeSet:
+      id: v002_create_roles_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: roles
+            indexName: idx_roles_name
+            columns:
+              - column:
+                  name: name
+
+        - createIndex:
+            tableName: roles
+            indexName: idx_roles_deleted
+            columns:
+              - column:
+                  name: deleted
+
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: '550e8400-e29b-41d4-a716-446655440001'
+              - column:
+                  name: name
+                  value: ADMIN
+              - column:
+                  name: description
+                  value: Administrator Role
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: '550e8400-e29b-41d4-a716-446655440002'
+              - column:
+                  name: name
+                  value: USER
+              - column:
+                  name: description
+                  value: Regular User Role
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: '550e8400-e29b-41d4-a716-446655440003'
+              - column:
+                  name: name
+                  value: MANAGER
+              - column:
+                  name: description
+                  value: Manager Role
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP

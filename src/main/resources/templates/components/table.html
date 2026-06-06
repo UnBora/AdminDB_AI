@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Reusable Table Component
+     Usage:
+     <div th:insert="components/table :: data-table(
+         id='userTable',
+         headers=#{'name': 'Name', 'email': 'Email', 'role': 'Role'},
+         data=${users},
+         onEdit='editUser',
+         onDelete='deleteUser')"
+     ></div>
+-->
+
+<div th:fragment="data-table(id, headers, data, onEdit, onDelete)" class="table-responsive">
+    <table class="table table-hover mb-0" th:id="${id}">
+        <thead class="table-light">
+            <tr>
+                <th th:each="header : ${headers}" th:text="${header.value}"></th>
+                <th style="width: 80px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item : ${data}" th:object="${item}">
+                <td th:each="key : ${headers.keySet()}" th:text="*{__${key}__}"></td>
+                <td>
+                    <button class="btn btn-sm btn-info me-1" th:onclick="|${onEdit}('${item.id}')|">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" th:if="${onDelete}" th:onclick="|${onDelete}('${item.id}')|">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

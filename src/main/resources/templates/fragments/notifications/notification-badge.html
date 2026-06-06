@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Notification Badge & Dropdown -->
+<div th:fragment="notification-badge" class="nav-item dropdown" id="notificationDropdown">
+    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" id="notificationBell">
+        <i class="bi bi-bell fs-5"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+              id="notificationBadge" style="display: none;">
+            <span id="unreadCount">0</span>
+        </span>
+    </a>
+    
+    <div class="dropdown-menu dropdown-menu-end" style="min-width: 350px; max-height: 500px; overflow-y: auto;">
+        <h6 class="dropdown-header">
+            Notifications
+            <button class="btn btn-sm btn-link float-end" id="markAllReadBtn" title="Mark all as read">
+                <i class="bi bi-check-all"></i>
+            </button>
+        </h6>
+        <hr class="dropdown-divider m-0">
+        
+        <div id="notificationList" class="dropdown-body" style="max-height: 350px; overflow-y: auto;">
+            <!-- Notifications will be loaded here -->
+        </div>
+        
+        <hr class="dropdown-divider m-0">
+        <a href="/notifications" class="dropdown-item text-center small">
+            View all notifications
+        </a>
+    </div>
+</div>
+
+<style>
+    #notificationDropdown .dropdown-body {
+        padding: 0.5rem 0;
+    }
+    
+    .notification-item {
+        border-left: 3px solid transparent;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .notification-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .notification-item.unread {
+        background-color: rgba(13, 110, 253, 0.08);
+        border-left-color: #0d6efd;
+    }
+    
+    .notification-item.info { border-left-color: #0d6efd; }
+    .notification-item.warning { border-left-color: #ffc107; }
+    .notification-item.error { border-left-color: #dc3545; }
+    .notification-item.success { border-left-color: #198754; }
+    
+    .notification-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .notification-message {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.25rem;
+    }
+    
+    .notification-time {
+        font-size: 0.75rem;
+        color: #999;
+    }
+</style>
+
+<script>
+    class NotificationManager {
+        constructor() {
+            this.notifications = [];
+            this.unreadCount = 0;
+            this.webSocket = null;
+            this.init();
+        }
+
+        init() {
+            this.loadNotifications();
+            this.setupEventListeners();
+            this.connectWebSocket();
+            
+            // Refresh notifications every 30 seconds
+            setInterval(() => this.loadNotifications(), 30000);
+        }
+
+        setupEventListeners() {
+            document.getElementById('markAllReadBtn').addEventListener('click', () => {
+                this.markAllAsRead();
+            });
+        }
+
+        loadNotifications() {
+            AjaxHelper.get('/api/notifications/unread?pageSize=10')
+                .then(response => {
+                    if (response.success && response.data.content) {
+                        this.notifications = response.data.content;
+                        this.unreadCount = response.data.totalElements || 0;
+                        this.render();
+                    }
+                })
+                .catch(error => console.error('Error loading notifications:', error));
+        }
+
+        render() {
+            this.updateBadge();
+            this.renderList();
+        }
+
+        updateBadge() {
+            const badge = document.getElementById('notificationBadge');
+            const count = document.getElementById('unreadCount');
+            
+            if (this.unreadCount > 0) {
+                badge.style.display = 'inline-block';
+                count.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        renderList() {
+            const list = document.getElementById('notificationList');
+            
+            if (this.notifications.length === 0) {
+                list.innerHTML = '<div class="p-3 text-center text-muted">No notifications</div>';
+                return;
+            }
+
+            let html = '';
+            this.notifications.forEach(notif => {
+                const typeBadgeClass = this.getTypeBadgeClass(notif.type);
+                const readClass = notif.read ? '' : 'unread';
+                const time = this.formatTime(notif.createdAt);
+
+                html += `
+                    <div class="notification-item ${readClass} ${notif.type?.toLowerCase() || 'info'}" 
+                         onclick="notificationManager.markAsRead('${notif.id}')">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="notification-title">${notif.title || 'Notification'}</div>
+                                <div class="notification-message">${notif.message || ''}</div>
+                                <div class="notification-time">${time}</div>
+                            </div>
+                            <div class="badge bg-${typeBadgeClass}">${notif.type || 'INFO'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+        }
+
+        markAsRead(notificationId) {
+            AjaxHelper.put(`/api/notifications/${notificationId}/read`, {})
+                .then(response => {
+                    if (response.success) {
+                        this.loadNotifications();
+                        NotificationHandler.success('Notification marked as read');
+                    }
+                })
+                .catch(error => console.error('Error marking notification as read:', error));
+        }
+
+        markAllAsRead() {
+            AjaxHelper.put('/api/notifications/mark-all-read', {})
+                .then(response => {
+                    if (response.success) {
+                        this.loadNotifications();
+                        NotificationHandler.success('All notifications marked as read');
+                    }
+                })
+                .catch(error => console.error('Error marking all notifications as read:', error));
+        }
+
+        connectWebSocket() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/notifications`;
+                
+                this.webSocket = new WebSocket(wsUrl);
+                
+                this.webSocket.onopen = () => {
+                    console.log('WebSocket connected');
+                };
+
+                this.webSocket.onmessage = (event) => {
+                    const notification = JSON.parse(event.data);
+                    this.addNotification(notification);
+                };
+
+                this.webSocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+
+                this.webSocket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    // Attempt to reconnect after 5 seconds
+                    setTimeout(() => this.connectWebSocket(), 5000);
+                };
+            } catch (error) {
+                console.error('Error connecting to WebSocket:', error);
+            }
+        }
+
+        addNotification(notification) {
+            this.notifications.unshift(notification);
+            if (this.notifications.length > 10) {
+                this.notifications.pop();
+            }
+            this.unreadCount++;
+            this.render();
+
+            // Show toast notification
+            NotificationHandler.info(notification.title || 'New notification');
+        }
+
+        formatTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            return date.toLocaleDateString();
+        }
+
+        getTypeBadgeClass(type) {
+            const colors = {
+                'INFO': 'info',
+                'WARNING': 'warning',
+                'ERROR': 'danger',
+                'SUCCESS': 'success'
+            };
+            return colors[type] || 'secondary';
+        }
+    }
+
+    // Initialize notification manager when DOM is ready
+    let notificationManager;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            notificationManager = new NotificationManager();
+        });
+    } else {
+        notificationManager = new NotificationManager();
+    }
+</script>

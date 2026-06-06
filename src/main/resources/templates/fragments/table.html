@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Data Table Component
+    Usage: th:include="fragments/table :: data-table(headers=headers, rows=rows, actions=actions)"
+    
+    Parameters:
+    - headers: List of header strings or objects with 'name' and 'key' properties
+    - rows: List of row objects containing data
+    - actions: List of actions (edit, delete) with URL parameters
+    - pageInfo: Optional pagination info (current page, total pages)
+    - striped: Boolean - adds striped rows (default: true)
+    - hover: Boolean - adds hover effect (default: true)
+    - bordered: Boolean - adds borders (default: false)
+    
+    Example:
+    <table th:insert="fragments/table :: data-table(
+        headers=headers, 
+        rows=rows, 
+        actions=actions)"
+    ></table>
+-->
+
+<table th:fragment="data-table(headers, rows, actions)" 
+       class="table" 
+       th:classappend="${striped != false ? 'table-striped' : ''} ${hover != false ? 'table-hover' : ''} ${bordered ? 'table-bordered' : ''}">
+    <thead class="table-light">
+        <tr>
+            <th scope="col" th:each="header : ${headers}">
+                <span th:if="${header instanceof T(java.lang.String)}" 
+                      th:text="${header}"></span>
+                <span th:unless="${header instanceof T(java.lang.String)}" 
+                      th:text="${header.name}"></span>
+            </th>
+            <th scope="col" th:if="${actions != null and actions.size() > 0}" 
+                th:text="#{table.actions}"></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:if="${rows == null or rows.size() == 0}">
+            <td th:colspan="${headers.size() + (actions != null and actions.size() > 0 ? 1 : 0)}" 
+                class="text-center text-muted py-4">
+                <i class="bi bi-inbox"></i>
+                <p th:text="#{table.no-data}"></p>
+            </td>
+        </tr>
+        <tr th:each="row : ${rows}">
+            <!-- Dynamically render row cells -->
+            <td th:each="header : ${headers}" 
+                th:text="${header instanceof T(java.lang.String) ? row[header] : row[header.key]}"></td>
+            
+            <!-- Actions column -->
+            <td th:if="${actions != null and actions.size() > 0}">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Row actions">
+                    <a th:each="action : ${actions}" 
+                       class="btn btn-sm"
+                       th:classappend="${action.type == 'delete' ? 'btn-outline-danger' : 'btn-outline-primary'}"
+                       th:href="${action.url}"
+                       th:title="${action.title}"
+                       th:onclick="${action.type == 'delete' ? 'return confirm(\"' + #{table.delete-confirm} + '\")' : ''}">
+                        <i th:class="${action.icon}" class="bi"></i>
+                        <span class="d-none d-lg-inline ms-1" th:text="${action.title}"></span>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- Pagination footer -->
+<nav th:fragment="table-pagination(pageInfo, baseUrl)" 
+     th:if="${pageInfo != null}" 
+     aria-label="Table pagination">
+    <ul class="pagination justify-content-center mb-0">
+        <li class="page-item" th:classappend="${pageInfo.isFirst() ? 'disabled' : ''}">
+            <a class="page-link" 
+               th:if="${!pageInfo.isFirst()}"
+               th:href="${baseUrl + '?page=0&size=' + pageInfo.size}">
+                <i class="bi bi-chevron-double-left"></i> <span th:text="#{pagination.first}"></span>
+            </a>
+            <span class="page-link" th:if="${pageInfo.isFirst()}">
+                <i class="bi bi-chevron-double-left"></i> <span th:text="#{pagination.first}"></span>
+            </span>
+        </li>
+        
+        <li class="page-item" th:classappend="${pageInfo.isFirst() ? 'disabled' : ''}">
+            <a class="page-link" 
+               th:if="${!pageInfo.isFirst()}"
+               th:href="${baseUrl + '?page=' + (pageInfo.number - 1) + '&size=' + pageInfo.size}">
+                <i class="bi bi-chevron-left"></i> <span th:text="#{pagination.previous}"></span>
+            </a>
+            <span class="page-link" th:if="${pageInfo.isFirst()}">
+                <i class="bi bi-chevron-left"></i> <span th:text="#{pagination.previous}"></span>
+            </span>
+        </li>
+
+        <li class="page-item active">
+            <span class="page-link" 
+                  th:text="#{table.page-info(${pageInfo.number + 1}, ${pageInfo.totalPages})}"></span>
+        </li>
+
+        <li class="page-item" th:classappend="${pageInfo.isLast() ? 'disabled' : ''}">
+            <a class="page-link" 
+               th:if="${!pageInfo.isLast()}"
+               th:href="${baseUrl + '?page=' + (pageInfo.number + 1) + '&size=' + pageInfo.size}">
+                <span th:text="#{pagination.next}"></span> <i class="bi bi-chevron-right"></i>
+            </a>
+            <span class="page-link" th:if="${pageInfo.isLast()}">
+                <span th:text="#{pagination.next}"></span> <i class="bi bi-chevron-right"></i>
+            </span>
+        </li>
+
+        <li class="page-item" th:classappend="${pageInfo.isLast() ? 'disabled' : ''}">
+            <a class="page-link" 
+               th:if="${!pageInfo.isLast()}"
+               th:href="${baseUrl + '?page=' + (pageInfo.totalPages - 1) + '&size=' + pageInfo.size}">
+                <span th:text="#{pagination.last}"></span> <i class="bi bi-chevron-double-right"></i>
+            </a>
+            <span class="page-link" th:if="${pageInfo.isLast()}">
+                <span th:text="#{pagination.last}"></span> <i class="bi bi-chevron-double-right"></i>
+            </span>
+        </li>
+    </ul>
+</nav>
+
+</body>
+</html>

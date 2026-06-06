@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Alert/Toast Component
+    
+    Usage for alert:
+    <div th:insert="fragments/alert :: alert(
+        type='success',
+        message='Operation completed',
+        dismissible=true)"
+    ></div>
+    
+    Usage for inline alert with i18n:
+    <div th:insert="fragments/alert :: alert(
+        type='error',
+        messageKey='error.user-not-found',
+        dismissible=true)"
+    ></div>
+    
+    Usage for toast:
+    <div th:insert="fragments/alert :: toast(
+        toastId='successToast',
+        type='success',
+        title='Success',
+        message='Action completed')"
+    ></div>
+    
+    Parameters for alert:
+    - type: 'success', 'error', 'warning', 'info' (default: info)
+    - message: Alert message text (optional)
+    - messageKey: Translation key for message (optional - use either message or messageKey)
+    - dismissible: Boolean - show close button (default: true)
+    - icon: Bootstrap icon class (default based on type)
+    - heading: Optional heading text or translation key
+    
+    Parameters for toast:
+    - toastId: Unique identifier for the toast
+    - type: 'success', 'error', 'warning', 'info'
+    - title: Toast title
+    - message: Toast message
+    - delay: Auto-hide delay in ms (0 = don't auto-hide)
+-->
+
+<!-- Standard Alert -->
+<div th:fragment="alert(type, message, messageKey, dismissible, icon, heading)"
+     th:classappend="'alert alert-' + (type != null ? type : 'info') + (dismissible != false ? ' alert-dismissible fade show' : '')"
+     class="alert"
+     role="alert">
+    
+    <!-- Icon -->
+    <i th:if="${icon != null}" th:class="${icon}" class="bi me-2"></i>
+    <i th:unless="${icon != null}" th:class="'bi bi-' + @{
+            type == 'success' ? 'check-circle-fill' :
+            type == 'error' ? 'exclamation-circle-fill' :
+            type == 'warning' ? 'exclamation-triangle-fill' :
+            'info-circle-fill'
+        }" class="bi me-2"></i>
+
+    <!-- Heading (optional) -->
+    <strong th:if="${heading != null}">
+        <span th:if="${heading.startsWith('{') and heading.endsWith('}')}"
+              th:text="#{${heading.substring(1, heading.length() - 1)}}"></span>
+        <span th:unless="${heading.startsWith('{') and heading.endsWith('}')}"
+              th:text="${heading}"></span>
+        <br />
+    </strong>
+
+    <!-- Message -->
+    <span th:if="${messageKey != null}"
+          th:text="#{${messageKey}}"></span>
+    <span th:if="${message != null and messageKey == null}"
+          th:text="${message}"></span>
+
+    <!-- Dismissible Close Button -->
+    <button th:if="${dismissible != false}"
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+            title="Close alert"></button>
+</div>
+
+<!-- Alert with Actions -->
+<div th:fragment="alert-with-action(type, message, messageKey, actionText, actionUrl, dismissible)"
+     th:classappend="'alert alert-' + (type != null ? type : 'info') + (dismissible != false ? ' alert-dismissible fade show' : '')"
+     class="alert d-flex justify-content-between align-items-center"
+     role="alert">
+    
+    <div>
+        <i th:class="'bi bi-' + @{
+                type == 'success' ? 'check-circle-fill' :
+                type == 'error' ? 'exclamation-circle-fill' :
+                type == 'warning' ? 'exclamation-triangle-fill' :
+                'info-circle-fill'
+            }" class="bi me-2"></i>
+        
+        <span th:if="${messageKey != null}"
+              th:text="#{${messageKey}}"></span>
+        <span th:if="${message != null and messageKey == null}"
+              th:text="${message}"></span>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+        <a th:if="${actionUrl != null}" 
+           th:href="${actionUrl}"
+           class="btn btn-sm btn-outline-primary"
+           th:text="${actionText}"></a>
+        
+        <button th:if="${dismissible != false}"
+                type="button"
+                class="btn-close ms-2"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    </div>
+</div>
+
+<!-- Toast Component (for async notifications) -->
+<div th:fragment="toast(toastId, type, title, message, delay)"
+     class="toast"
+     th:id="${toastId}"
+     role="alert"
+     aria-live="assertive"
+     aria-atomic="true"
+     th:attr="data-bs-delay=${delay != null ? delay : 5000}">
+    
+    <!-- Toast Header -->
+    <div th:classappend="'bg-' + (type != null ? type : 'info')"
+         class="toast-header">
+        <i th:class="'bi bi-' + @{
+                type == 'success' ? 'check-circle-fill text-success' :
+                type == 'error' ? 'exclamation-circle-fill text-danger' :
+                type == 'warning' ? 'exclamation-triangle-fill text-warning' :
+                'info-circle-fill text-info'
+            }" class="bi me-2"></i>
+        
+        <strong class="me-auto">
+            <span th:if="${title.startsWith('{') and title.endsWith('}')}"
+                  th:text="#{${title.substring(1, title.length() - 1)}}"></span>
+            <span th:unless="${title.startsWith('{') and title.endsWith('}')}"
+                  th:text="${title}"></span>
+        </strong>
+        
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+
+    <!-- Toast Body -->
+    <div class="toast-body">
+        <span th:if="${message.startsWith('{') and message.endsWith('}')}"
+              th:text="#{${message.substring(1, message.length() - 1)}}"></span>
+        <span th:unless="${message.startsWith('{') and message.endsWith('}')}"
+              th:text="${message}"></span>
+    </div>
+</div>
+
+<!-- Toast Container (wrapper for multiple toasts) -->
+<div th:fragment="toast-container"
+     class="toast-container position-fixed bottom-0 end-0 p-3"
+     style="z-index: 11"
+     id="toastContainer">
+    <!-- Toasts will be added here dynamically -->
+</div>
+
+<!-- Alert List (for multiple messages) -->
+<div th:fragment="alert-list(alerts)"
+     th:if="${alerts != null and alerts.size() > 0}">
+    
+    <div th:each="alert : ${alerts}"
+         th:classappend="'alert alert-' + ${alert.type} + ' alert-dismissible fade show'"
+         class="alert"
+         role="alert">
+        
+        <i th:class="'bi bi-' + @{
+                alert.type == 'success' ? 'check-circle-fill' :
+                alert.type == 'error' ? 'exclamation-circle-fill' :
+                alert.type == 'warning' ? 'exclamation-triangle-fill' :
+                'info-circle-fill'
+            }" class="bi me-2"></i>
+        
+        <span th:text="${alert.message}"></span>
+        
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    </div>
+</div>
+
+<!-- Inline Validation Error Alert -->
+<div th:fragment="field-error-alert(fieldName, errors)"
+     th:if="${errors != null and errors.hasFieldErrors(fieldName)}"
+     class="alert alert-danger alert-dismissible fade show"
+     role="alert">
+    
+    <i class="bi bi-exclamation-circle-fill me-2"></i>
+    
+    <div>
+        <strong th:text="#{alert.validation-error}"></strong>
+        <ul class="mb-0 mt-2">
+            <li th:each="error : ${errors.getFieldErrors(fieldName)}"
+                th:text="${error.defaultMessage}"></li>
+        </ul>
+    </div>
+    
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+</body>
+</html>

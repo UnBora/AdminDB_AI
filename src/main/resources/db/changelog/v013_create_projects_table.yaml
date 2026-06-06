@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: v013_create_projects_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: projects
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: status
+                  type: varchar(50)
+              - column:
+                  name: owner_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_projects_owner
+                    references: users(id)
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValue: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: created_by
+                  type: uuid
+              - column:
+                  name: updated_by
+                  type: uuid
+
+        - createIndex:
+            tableName: projects
+            indexName: idx_projects_owner_id
+            columns:
+              - column:
+                  name: owner_id
+
+        - createIndex:
+            tableName: projects
+            indexName: idx_projects_status
+            columns:
+              - column:
+                  name: status

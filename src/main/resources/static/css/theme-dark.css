@@ -1,0 +1,36 @@
+/* Dark Mode Theme Variables */
+:root.dark-mode {
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #e0e0e0;
+}
+
+:root.dark-mode body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+:root.dark-mode .navbar,
+:root.dark-mode .card,
+:root.dark-mode .list-group {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+:root.dark-mode input,
+:root.dark-mode textarea,
+:root.dark-mode select {
+    background-color: #3a3a3a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+:root.dark-mode .table {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #404040;
+}
+
+:root.dark-mode .text-muted {
+    color: #909090 !important;
+}

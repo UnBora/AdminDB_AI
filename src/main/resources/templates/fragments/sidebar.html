@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    Dynamic Sidebar Fragment
+
+    Usage:
+    <div th:insert="fragments/sidebar :: sidebar-menu(menus=visibleMenus)"></div>
+
+    Parameters:
+    - menus: List<MenuResponse> - Menu tree to render
+    - currentPath: String (optional) - Current page URL for active highlighting
+-->
+
+<aside th:fragment="sidebar-menu(menus, currentPath)" id="sidebar" class="sidebar">
+    <nav class="navbar navbar-dark bg-dark flex-column">
+        <div class="sidebar-header">
+            <button class="btn btn-link btn-sm text-light d-lg-none" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="bi bi-list"></i>
+            </button>
+            <span class="sidebar-brand fw-bold d-none d-lg-inline">
+                <i class="bi bi-compass"></i> Menu
+            </span>
+        </div>
+
+        <div class="nav-menu flex-grow-1">
+            <div class="nav-item-group">
+                <div th:each="menu : ${menus}" class="nav-item">
+                    <!-- Menu Item -->
+                    <a th:if="${menu.children == null or menu.children.isEmpty()}"
+                       th:href="${menu.url != null ? menu.url : '#'}"
+                       class="nav-link"
+                       th:classappend="${#strings.contains(currentPath != null ? currentPath : '', menu.url != null ? menu.url : '') ? 'active' : ''}"
+                       th:attr="data-menu-id=${menu.id}">
+                        <i th:if="${menu.icon != null}"
+                           th:class="'bi ' + ${menu.icon}"
+                           class="bi me-2"></i>
+                        <span class="menu-text" th:text="${menu.translationKey != null ? @translationService.get(menu.translationKey) : menu.name}"></span>
+                    </a>
+
+                    <!-- Parent Item with Children -->
+                    <div th:if="${menu.children != null and !menu.children.isEmpty()}"
+                         class="nav-item-with-children">
+                        <button class="nav-link menu-toggle"
+                                type="button"
+                                th:attr="data-menu-id=${menu.id}"
+                                aria-expanded="false">
+                            <i th:if="${menu.icon != null}"
+                               th:class="'bi ' + ${menu.icon}"
+                               class="bi me-2"></i>
+                            <span class="menu-text" th:text="${menu.translationKey != null ? @translationService.get(menu.translationKey) : menu.name}"></span>
+                            <i class="bi bi-chevron-down ms-auto menu-chevron"></i>
+                        </button>
+
+                        <!-- Submenu -->
+                        <div class="submenu collapse" th:id="'submenu-' + ${menu.id}">
+                            <div class="nav-item-group ps-4">
+                                <div th:each="child : ${menu.children}" class="nav-item">
+                                    <!-- Child Menu Item -->
+                                    <a th:if="${child.children == null or child.children.isEmpty()}"
+                                       th:href="${child.url != null ? child.url : '#'}"
+                                       class="nav-link"
+                                       th:classappend="${#strings.contains(currentPath != null ? currentPath : '', child.url != null ? child.url : '') ? 'active' : ''}"
+                                       th:attr="data-menu-id=${child.id}">
+                                        <i th:if="${child.icon != null}"
+                                           th:class="'bi ' + ${child.icon}"
+                                           class="bi me-2"></i>
+                                        <span class="menu-text" th:text="${child.translationKey != null ? @translationService.get(child.translationKey) : child.name}"></span>
+                                    </a>
+
+                                    <!-- Nested Parent Item -->
+                                    <div th:if="${child.children != null and !child.children.isEmpty()}"
+                                         class="nav-item-with-children">
+                                        <button class="nav-link menu-toggle"
+                                                type="button"
+                                                th:attr="data-menu-id=${child.id}"
+                                                aria-expanded="false">
+                                            <i th:if="${child.icon != null}"
+                                               th:class="'bi ' + ${child.icon}"
+                                               class="bi me-2"></i>
+                                            <span class="menu-text" th:text="${child.translationKey != null ? @translationService.get(child.translationKey) : child.name}"></span>
+                                            <i class="bi bi-chevron-down ms-auto menu-chevron"></i>
+                                        </button>
+
+                                        <!-- Nested Submenu -->
+                                        <div class="submenu collapse" th:id="'submenu-' + ${child.id}">
+                                            <div class="nav-item-group ps-4">
+                                                <div th:each="grandchild : ${child.children}" class="nav-item">
+                                                    <a th:href="${grandchild.url != null ? grandchild.url : '#'}"
+                                                       class="nav-link"
+                                                       th:classappend="${#strings.contains(currentPath != null ? currentPath : '', grandchild.url != null ? grandchild.url : '') ? 'active' : ''}"
+                                                       th:attr="data-menu-id=${grandchild.id}">
+                                                        <i th:if="${grandchild.icon != null}"
+                                                           th:class="'bi ' + ${grandchild.icon}"
+                                                           class="bi me-2"></i>
+                                                        <span class="menu-text" th:text="${grandchild.translationKey != null ? @translationService.get(grandchild.translationKey) : grandchild.name}"></span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${menus == null or menus.isEmpty()}" class="alert alert-info mx-2 mt-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <span th:text="#{sidebar.no-menus}">No menus available</span>
+            </div>
+        </div>
+    </nav>
+</aside>
+
+<!-- Sidebar Styles -->
+<style th:fragment="sidebar-styles">
+.sidebar {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    position: relative;
+    padding: 0;
+    max-width: 280px;
+    width: 100%;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-brand {
+    color: #fff;
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-menu {
+    padding: 1rem 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+}
+
+.nav-item-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.nav-item {
+    position: relative;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding-left: 1.25rem;
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-left: 3px solid #4fc3f7;
+    padding-left: calc(1rem - 3px);
+}
+
+.menu-toggle {
+    cursor: pointer;
+}
+
+.menu-toggle[aria-expanded="true"] .menu-chevron {
+    transform: rotate(180deg);
+}
+
+.menu-chevron {
+    transition: transform 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.submenu {
+    display: none;
+}
+
+.submenu.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.nav-item-group.ps-4 .nav-link {
+    padding-left: 2.5rem;
+    font-size: 0.9rem;
+}
+
+.nav-item-group.ps-4 .nav-link:hover {
+    padding-left: 2.75rem;
+}
+
+.nav-item-group.ps-4 .nav-link.active {
+    padding-left: calc(2.5rem - 3px);
+    border-left: 3px solid #4fc3f7;
+}
+
+.sidebar .bi {
+    font-size: 1rem;
+    width: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.menu-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+        max-width: 280px;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .nav-menu {
+        max-height: calc(100vh - 70px);
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        max-width: 250px;
+        left: -250px;
+    }
+
+    .nav-link {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .nav-link:hover {
+        padding-left: 1.05rem;
+    }
+
+    .nav-item-group.ps-4 .nav-link {
+        padding-left: 2.2rem;
+    }
+
+    .nav-item-group.ps-4 .nav-link:hover {
+        padding-left: 2.4rem;
+    }
+}
+
+/* Scrollbar Styling */
+.nav-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.nav-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.nav-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+</style>
+
+<!-- Sidebar JavaScript -->
+<script th:fragment="sidebar-script">
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle submenu visibility
+    const toggleButtons = document.querySelectorAll('.menu-toggle');
+    
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const menuId = this.getAttribute('data-menu-id');
+            const submenu = document.getElementById('submenu-' + menuId);
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            
+            // Close other submenus
+            toggleButtons.forEach(otherButton => {
+                if (otherButton !== button) {
+                    const otherMenuId = otherButton.getAttribute('data-menu-id');
+                    const otherSubmenu = document.getElementById('submenu-' + otherMenuId);
+                    if (otherSubmenu) {
+                        otherSubmenu.classList.remove('show');
+                    }
+                    otherButton.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Toggle current submenu
+            if (submenu) {
+                submenu.classList.toggle('show', !isExpanded);
+                this.setAttribute('aria-expanded', !isExpanded);
+            }
+        });
+    });
+
+    // Highlight active menu based on current path
+    const currentPath = window.location.pathname;
+    const menuLinks = document.querySelectorAll('.sidebar .nav-link');
+    
+    menuLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && currentPath.includes(href) && href !== '#') {
+            link.classList.add('active');
+            
+            // Expand parent submenu if active item is nested
+            const parentSubmenu = link.closest('.submenu');
+            if (parentSubmenu) {
+                parentSubmenu.classList.add('show');
+                const parentToggle = parentSubmenu.previousElementSibling;
+                if (parentToggle && parentToggle.classList.contains('menu-toggle')) {
+                    parentToggle.setAttribute('aria-expanded', 'true');
+                }
+            }
+        }
+    });
+
+    // Mobile sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            document.body.classList.toggle('sidebar-open');
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!sidebar.contains(e.target) && e.target !== sidebarToggle) {
+                sidebar.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a:not(.menu-toggle)');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            });
+        });
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+
+<head>
+    <title>Audit Logs</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">Audit Logs</h1>
+                <p class="text-muted small">Track system changes and user actions</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-secondary" id="exportBtn">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <button class="btn btn-outline-secondary ms-2" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Entity Type</label>
+                        <input type="text" class="form-control" id="entityFilter" placeholder="Filter by entity...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Action</label>
+                        <select class="form-select" id="actionFilter">
+                            <option value="">All Actions</option>
+                            <option value="CREATE">Create</option>
+                            <option value="UPDATE">Update</option>
+                            <option value="DELETE">Delete</option>
+                            <option value="LOGIN">Login</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">User</label>
+                        <input type="text" class="form-control" id="userFilter" placeholder="Filter by user...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range</label>
+                        <input type="date" class="form-control" id="dateFilter">
+                    </div>
+                    <div class="col-md-12 pt-2">
+                        <button class="btn btn-primary" id="applyFiltersBtn">Apply Filters</button>
+                        <button class="btn btn-outline-secondary" id="clearFiltersBtn">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0" id="auditTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Entity ID</th>
+                            <th>IP Address</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0" id="paginationNav">
+                        <!-- Pagination will be rendered here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Audit Log Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailContent">
+                    <!-- Content will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentPage = 1;
+        const pageSize = 20;
+
+        // Load audit logs
+        function loadAuditLogs(page = 1) {
+            const params = new URLSearchParams({
+                pageNumber: page,
+                pageSize: pageSize,
+                entity: document.getElementById('entityFilter').value,
+                action: document.getElementById('actionFilter').value,
+                user: document.getElementById('userFilter').value,
+                date: document.getElementById('dateFilter').value
+            });
+
+            AjaxHelper.get(`/api/audit/logs?${params}`)
+                .then(response => {
+                    if (response.success) {
+                        renderAuditTable(response.data);
+                        renderPagination(response.data);
+                    } else {
+                        NotificationHandler.error(response.message || 'Failed to load audit logs');
+                    }
+                })
+                .catch(error => {
+                    NotificationHandler.error('Error loading audit logs: ' + error.message);
+                    console.error(error);
+                });
+        }
+
+        function renderAuditTable(pagination) {
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = '';
+
+            if (!pagination.content || pagination.content.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No audit logs found</td></tr>';
+                return;
+            }
+
+            pagination.content.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <small>${new Date(log.createdAt).toLocaleString()}</small>
+                    </td>
+                    <td>${log.createdBy || 'System'}</td>
+                    <td>
+                        <span class="badge bg-${getActionBadgeColor(log.action)}">
+                            ${log.action}
+                        </span>
+                    </td>
+                    <td>${log.entityType}</td>
+                    <td><code>${log.entityId}</code></td>
+                    <td><small>${log.ipAddress || 'N/A'}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-info" 
+                                onclick="viewDetail('${log.id}')"
+                                title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function viewDetail(auditId) {
+            AjaxHelper.get(`/api/audit/log/${auditId}`)
+                .then(response => {
+                    if (response.success) {
+                        renderDetailModal(response.data);
+                        new bootstrap.Modal(document.getElementById('detailModal')).show();
+                    } else {
+                        NotificationHandler.error('Failed to load audit log details');
+                    }
+                })
+                .catch(error => {
+                    NotificationHandler.error('Error: ' + error.message);
+                });
+        }
+
+        function renderDetailModal(log) {
+            const content = document.getElementById('detailContent');
+            
+            const oldData = log.oldData ? JSON.parse(log.oldData) : {};
+            const newData = log.newData ? JSON.parse(log.newData) : {};
+            
+            let changesHtml = '<div class="accordion" id="changesAccordion">';
+            
+            if (log.changes) {
+                const changes = JSON.parse(log.changes);
+                Object.entries(changes).forEach(([field, value], index) => {
+                    const oldVal = oldData[field] || 'N/A';
+                    const newVal = newData[field] || 'N/A';
+                    
+                    changesHtml += `
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#change${index}">
+                                    <strong>${field}</strong>
+                                </button>
+                            </h2>
+                            <div id="change${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Old Value</label>
+                                            <div class="p-2 bg-light rounded">
+                                                <code>${String(oldVal).substring(0, 100)}</code>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">New Value</label>
+                                            <div class="p-2 bg-light rounded">
+                                                <code>${String(newVal).substring(0, 100)}</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            changesHtml += '</div>';
+            
+            content.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Entity Type</label>
+                        <div>${log.entityType}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Entity ID</label>
+                        <div><code>${log.entityId}</code></div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Action</label>
+                        <div><span class="badge bg-${getActionBadgeColor(log.action)}">${log.action}</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Timestamp</label>
+                        <div>${new Date(log.createdAt).toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">User</label>
+                        <div>${log.createdBy || 'System'}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">IP Address</label>
+                        <div><code>${log.ipAddress || 'N/A'}</code></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Changes</strong></label>
+                    ${changesHtml}
+                </div>
+            `;
+        }
+
+        function renderPagination(pagination) {
+            const nav = document.getElementById('paginationNav');
+            nav.innerHTML = '';
+
+            const container = document.createElement('li');
+            container.className = 'page-item';
+            
+            let html = '';
+            if (pagination.pageNumber > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadAuditLogs(${pagination.pageNumber - 1})">Previous</a></li>`;
+            }
+            
+            html += `<li class="page-item active"><span class="page-link">${pagination.pageNumber} / ${pagination.totalPages}</span></li>`;
+            
+            if (pagination.pageNumber < pagination.totalPages) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadAuditLogs(${pagination.pageNumber + 1})">Next</a></li>`;
+            }
+            
+            nav.innerHTML = html;
+        }
+
+        function getActionBadgeColor(action) {
+            const colors = {
+                'CREATE': 'success',
+                'UPDATE': 'info',
+                'DELETE': 'danger',
+                'LOGIN': 'primary',
+                'VIEW': 'secondary'
+            };
+            return colors[action] || 'secondary';
+        }
+
+        // Event listeners
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => loadAuditLogs(1));
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            document.getElementById('entityFilter').value = '';
+            document.getElementById('actionFilter').value = '';
+            document.getElementById('userFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            loadAuditLogs(1);
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const params = new URLSearchParams({
+                entity: document.getElementById('entityFilter').value,
+                action: document.getElementById('actionFilter').value,
+                user: document.getElementById('userFilter').value,
+                date: document.getElementById('dateFilter').value
+            });
+            window.location.href = `/api/audit/export?${params}`;
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', () => loadAuditLogs());
+
+        // Initial load
+        loadAuditLogs();
+    </script>
+</div>
+</body>
+</html>

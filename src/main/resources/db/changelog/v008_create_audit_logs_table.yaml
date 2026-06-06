@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: v008_create_audit_logs_table
+      author: platform
+      changes:
+        - createTable:
+            tableName: audit_logs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: entity_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: entity_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: old_data
+                  type: jsonb
+              - column:
+                  name: new_data
+                  type: jsonb
+              - column:
+                  name: changes
+                  type: jsonb
+              - column:
+                  name: user_id
+                  type: uuid
+              - column:
+                  name: ip_address
+                  type: varchar(45)
+              - column:
+                  name: user_agent
+                  type: varchar(500)
+              - column:
+                  name: description
+                  type: varchar(1000)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - createIndex:
+            tableName: audit_logs
+            indexName: idx_audit_logs_entity
+            columns:
+              - column:
+                  name: entity_type
+              - column:
+                  name: entity_id
+
+        - createIndex:
+            tableName: audit_logs
+            indexName: idx_audit_logs_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: audit_logs
+            indexName: idx_audit_logs_action
+            columns:
+              - column:
+                  name: action
+
+        - createIndex:
+            tableName: audit_logs
+            indexName: idx_audit_logs_created_at
+            columns:
+              - column:
+                  name: created_at

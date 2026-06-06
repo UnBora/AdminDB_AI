@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+
+<head>
+    <title>Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h3">Analytics & Reports</h1>
+                <p class="text-muted small">System metrics and activity statistics</p>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4" id="summaryCards">
+            <!-- Will be loaded by JavaScript -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mb-4">
+            <!-- Daily Activity Chart -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Daily Activity (Last 30 Days)</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="dailyActivityChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Growth Chart -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">User Growth (Last 12 Months)</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="userGrowthChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Frequency & Login Trends -->
+        <div class="row">
+            <!-- Action Frequency -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Action Frequency</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="actionFrequencyChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Trends -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Login Trends (Last 12 Months)</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="loginTrendsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        // Load analytics summary
+        function loadAnalyticsSummary() {
+            AjaxHelper.get('/api/analytics/summary')
+                .then(response => {
+                    if (response.success) {
+                        renderSummaryCards(response.data);
+                    }
+                })
+                .catch(error => console.error('Error loading summary:', error));
+        }
+
+        // Load daily statistics
+        function loadDailyStatistics() {
+            AjaxHelper.get('/api/analytics/daily')
+                .then(response => {
+                    if (response.success) {
+                        renderDailyActivityChart(response.data);
+                    }
+                })
+                .catch(error => console.error('Error loading daily stats:', error));
+        }
+
+        // Load user growth
+        function loadUserGrowth() {
+            AjaxHelper.get('/api/analytics/user-growth?months=12')
+                .then(response => {
+                    if (response.success) {
+                        renderUserGrowthChart(response.data);
+                    }
+                })
+                .catch(error => console.error('Error loading user growth:', error));
+        }
+
+        // Load action frequency
+        function loadActionFrequency() {
+            AjaxHelper.get('/api/analytics/action-frequency?days=30')
+                .then(response => {
+                    if (response.success) {
+                        renderActionFrequencyChart(response.data);
+                    }
+                })
+                .catch(error => console.error('Error loading action frequency:', error));
+        }
+
+        // Load login trends
+        function loadLoginTrends() {
+            AjaxHelper.get('/api/analytics/login-trends?months=12')
+                .then(response => {
+                    if (response.success) {
+                        renderLoginTrendsChart(response.data);
+                    }
+                })
+                .catch(error => console.error('Error loading login trends:', error));
+        }
+
+        // Render summary cards
+        function renderSummaryCards(data) {
+            const container = document.getElementById('summaryCards');
+            const cards = [
+                { title: 'Total Users', value: data.totalUsers, icon: 'bi-people', color: 'primary' },
+                { title: 'Active Today', value: data.activeUsersToday, icon: 'bi-activity', color: 'success' },
+                { title: 'New This Month', value: data.newUsersThisMonth, icon: 'bi-person-plus', color: 'info' },
+                { title: 'Total Logins', value: data.totalLogins, icon: 'bi-box-arrow-in-right', color: 'warning' },
+                { title: 'Success Rate', value: data.successRate + '%', icon: 'bi-check-circle', color: 'success' },
+                { title: 'Avg Session', value: data.averageSessionDuration + ' min', icon: 'bi-hourglass', color: 'secondary' }
+            ];
+
+            container.innerHTML = cards.map(card => `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-muted mb-1">${card.title}</h6>
+                                    <h3 class="mb-0">${card.value}</h3>
+                                </div>
+                                <div class="text-${card.color}">
+                                    <i class="bi ${card.icon} fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render daily activity chart
+        function renderDailyActivityChart(data) {
+            const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            const logins = data.map(d => d.totalLogins);
+            const actions = data.map(d => d.totalActions);
+
+            if (charts.dailyActivity) charts.dailyActivity.destroy();
+
+            const ctx = document.getElementById('dailyActivityChart').getContext('2d');
+            charts.dailyActivity = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Logins',
+                            data: logins,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Actions',
+                            data: actions,
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: true, position: 'top' } }
+                }
+            });
+        }
+
+        // Render user growth chart
+        function renderUserGrowthChart(data) {
+            const labels = data.map(d => d.month);
+            const totalUsers = data.map(d => d.totalUsers);
+            const newUsers = data.map(d => d.newUsers);
+
+            if (charts.userGrowth) charts.userGrowth.destroy();
+
+            const ctx = document.getElementById('userGrowthChart').getContext('2d');
+            charts.userGrowth = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Users',
+                            data: totalUsers,
+                            backgroundColor: '#0d6efd'
+                        },
+                        {
+                            label: 'New Users',
+                            data: newUsers,
+                            backgroundColor: '#198754'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: true, position: 'top' } }
+                }
+            });
+        }
+
+        // Render action frequency chart
+        function renderActionFrequencyChart(data) {
+            const labels = data.map(d => d.action);
+            const counts = data.map(d => d.count);
+            const colors = ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0'];
+
+            if (charts.actionFrequency) charts.actionFrequency.destroy();
+
+            const ctx = document.getElementById('actionFrequencyChart').getContext('2d');
+            charts.actionFrequency = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: colors.slice(0, labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: true, position: 'right' } }
+                }
+            });
+        }
+
+        // Render login trends chart
+        function renderLoginTrendsChart(data) {
+            const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { year: '2-digit', month: 'short' }));
+            const logins = data.map(d => d.totalLogins);
+
+            if (charts.loginTrends) charts.loginTrends.destroy();
+
+            const ctx = document.getElementById('loginTrendsChart').getContext('2d');
+            charts.loginTrends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Monthly Logins',
+                        data: logins,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: true, position: 'top' } }
+                }
+            });
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAnalyticsSummary();
+            loadDailyStatistics();
+            loadUserGrowth();
+            loadActionFrequency();
+            loadLoginTrends();
+        });
+    </script>
+</div>
+</body>
+</html>

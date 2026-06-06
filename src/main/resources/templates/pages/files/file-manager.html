@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+
+<head>
+    <title>File Manager</title>
+    <style>
+        .drop-zone {
+            border: 2px dashed #0d6efd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            background-color: #e7f1ff;
+            border-color: #0056b3;
+        }
+
+        .drop-zone i {
+            font-size: 48px;
+            color: #0d6efd;
+            margin-bottom: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #0d6efd;
+            width: 0;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h3">File Manager</h1>
+                <p class="text-muted small">Upload and manage files</p>
+            </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upload Files</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Drag & Drop Zone -->
+                        <div class="drop-zone" id="dropZone">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <h5>Drag and drop files here or click to browse</h5>
+                            <p class="text-muted small">Max 50MB per file. Supported: PDF, DOC, XLS, TXT, JPG, PNG, ZIP</p>
+                        </div>
+                        <input type="file" id="fileInput" multiple style="display: none;">
+
+                        <!-- File List -->
+                        <div class="mt-4" id="fileListContainer" style="display: none;">
+                            <h6 class="mb-3">Uploading Files</h6>
+                            <div id="fileList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Info -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upload Info</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Module</label>
+                            <select class="form-select" id="moduleSelect">
+                                <option value="">-- Select Module --</option>
+                                <option value="user">User</option>
+                                <option value="project">Project</option>
+                                <option value="portfolio">Portfolio</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="fileDescription" rows="3" placeholder="Optional"></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isPublic">
+                            <label class="form-check-label" for="isPublic">
+                                Make file public
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File List -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">My Files</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="filesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Type</th>
+                            <th>Module</th>
+                            <th>Downloads</th>
+                            <th>Uploaded</th>
+                            <th style="width: 80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-3">Loading files...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileListContainer = document.getElementById('fileListContainer');
+
+        // Drop zone events
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            fileList.innerHTML = '';
+            fileListContainer.style.display = 'block';
+
+            Array.from(files).forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-icon" style="background-color: ${getColorForType(file.name)}">
+                        ${getFileExtension(file.name)}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div><strong>${file.name}</strong></div>
+                        <div class="small text-muted">${(file.size / 1024).toFixed(2)} KB</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                `;
+                fileList.appendChild(fileItem);
+
+                uploadFile(file, fileItem);
+            });
+        }
+
+        function uploadFile(file, fileItem) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('module', document.getElementById('moduleSelect').value || 'general');
+            formData.append('entityId', '00000000-0000-0000-0000-000000000000');
+            formData.append('description', document.getElementById('fileDescription').value);
+            formData.append('isPublic', document.getElementById('isPublic').checked);
+
+            fetch('/api/files/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const progressBar = fileItem.querySelector('.progress-bar');
+                    progressBar.style.width = '100%';
+                    NotificationHandler.success('File uploaded: ' + file.name);
+                    loadFiles();
+                } else {
+                    NotificationHandler.error('Error uploading file');
+                }
+            })
+            .catch(error => {
+                NotificationHandler.error('Upload error: ' + error.message);
+            });
+        }
+
+        function loadFiles() {
+            const tbody = document.getElementById('filesTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Loading...</td></tr>';
+
+            AjaxHelper.get('/api/files/list')
+                .then(response => {
+                    if (response.success) {
+                        renderFilesList(response.data || []);
+                    }
+                })
+                .catch(error => NotificationHandler.error('Error loading files'));
+        }
+
+        function renderFilesList(files) {
+            const tbody = document.getElementById('filesTableBody');
+            tbody.innerHTML = '';
+
+            if (files.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3">No files yet</td></tr>';
+                return;
+            }
+
+            files.forEach(file => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="badge" style="background-color: ${getColorForType(file.originalName)}">${getFileExtension(file.originalName)}</span></td>
+                    <td><strong>${file.originalName}</strong></td>
+                    <td>${file.fileSizeFormatted}</td>
+                    <td>${file.fileType}</td>
+                    <td>${file.module}</td>
+                    <td>${file.downloadCount}</td>
+                    <td><small>${new Date(file.createdAt).toLocaleDateString()}</small></td>
+                    <td>
+                        <a href="/api/files/${file.id}/download" class="btn btn-sm btn-primary" title="Download">
+                            <i class="bi bi-download"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger" onclick="deleteFile('${file.id}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function deleteFile(fileId) {
+            if (!confirm('Delete this file?')) return;
+
+            AjaxHelper.delete(`/api/files/${fileId}`)
+                .then(response => {
+                    if (response.success) {
+                        NotificationHandler.success('File deleted');
+                        loadFiles();
+                    }
+                })
+                .catch(error => NotificationHandler.error('Error: ' + error.message));
+        }
+
+        function getFileExtension(filename) {
+            if (!filename || !filename.includes('.')) return 'UNK';
+            return filename.substring(filename.lastIndexOf('.') + 1).substring(0, 3).toUpperCase();
+        }
+
+        function getColorForType(filename) {
+            const ext = getFileExtension(filename).toLowerCase();
+            const colors = {
+                'pdf': '#dc3545',
+                'doc': '#0056b3',
+                'xls': '#198754',
+                'jpg': '#ffc107',
+                'png': '#ffc107',
+                'zip': '#6c757d'
+            };
+            return colors[ext] || '#0d6efd';
+        }
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+
+        // Load files on page load
+        document.addEventListener('DOMContentLoaded', loadFiles);
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,844 @@
+databaseChangeLog:
+  - changeSet:
+      id: v018_seed_default_app_settings
+      author: platform
+      changes:
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: APP_NAME
+              - column:
+                  name: setting_value
+                  value: '"AdminDB AI"'
+              - column:
+                  name: category
+                  value: GENERAL
+              - column:
+                  name: description
+                  value: Application name
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: APP_DESCRIPTION
+              - column:
+                  name: setting_value
+                  value: '"Enterprise Administration Platform"'
+              - column:
+                  name: category
+                  value: GENERAL
+              - column:
+                  name: description
+                  value: Application description
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: APP_LOGO_URL
+              - column:
+                  name: setting_value
+                  value: '"/images/logo.png"'
+              - column:
+                  name: category
+                  value: GENERAL
+              - column:
+                  name: description
+                  value: Application logo URL
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: APP_THEME
+              - column:
+                  name: setting_value
+                  value: '"light"'
+              - column:
+                  name: category
+                  value: APPEARANCE
+              - column:
+                  name: description
+                  value: Application theme (light/dark/auto)
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: DARK_MODE_ENABLED
+              - column:
+                  name: setting_value
+                  value: 'false'
+              - column:
+                  name: category
+                  value: APPEARANCE
+              - column:
+                  name: description
+                  value: Enable dark mode
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PRIMARY_COLOR
+              - column:
+                  name: setting_value
+                  value: '"#007bff"'
+              - column:
+                  name: category
+                  value: APPEARANCE
+              - column:
+                  name: description
+                  value: Primary color in hex
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SECONDARY_COLOR
+              - column:
+                  name: setting_value
+                  value: '"#6c757d"'
+              - column:
+                  name: category
+                  value: APPEARANCE
+              - column:
+                  name: description
+                  value: Secondary color in hex
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SMTP_HOST
+              - column:
+                  name: setting_value
+                  value: '"smtp.gmail.com"'
+              - column:
+                  name: category
+                  value: EMAIL
+              - column:
+                  name: description
+                  value: SMTP server host
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SMTP_PORT
+              - column:
+                  name: setting_value
+                  value: '587'
+              - column:
+                  name: category
+                  value: EMAIL
+              - column:
+                  name: description
+                  value: SMTP server port
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SMTP_USERNAME
+              - column:
+                  name: setting_value
+                  value: '""'
+              - column:
+                  name: category
+                  value: EMAIL
+              - column:
+                  name: description
+                  value: SMTP username
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SMTP_PASSWORD
+              - column:
+                  name: setting_value
+                  value: '""'
+              - column:
+                  name: category
+                  value: EMAIL
+              - column:
+                  name: description
+                  value: SMTP password
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SMTP_FROM_EMAIL
+              - column:
+                  name: setting_value
+                  value: '""'
+              - column:
+                  name: category
+                  value: EMAIL
+              - column:
+                  name: description
+                  value: SMTP sender email
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: ENABLE_2FA
+              - column:
+                  name: setting_value
+                  value: 'false'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Enable two-factor authentication
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PASSWORD_MIN_LENGTH
+              - column:
+                  name: setting_value
+                  value: '8'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Minimum password length
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PASSWORD_REQUIRE_NUMBERS
+              - column:
+                  name: setting_value
+                  value: 'true'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Require numbers in password
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PASSWORD_REQUIRE_UPPERCASE
+              - column:
+                  name: setting_value
+                  value: 'true'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Require uppercase in password
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PASSWORD_REQUIRE_SPECIAL_CHARS
+              - column:
+                  name: setting_value
+                  value: 'true'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Require special characters in password
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: SESSION_TIMEOUT_MINUTES
+              - column:
+                  name: setting_value
+                  value: '30'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Session timeout in minutes
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: PASSWORD_EXPIRY_DAYS
+              - column:
+                  name: setting_value
+                  value: '90'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Password expiry in days
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: ENABLE_PASSWORD_EXPIRY
+              - column:
+                  name: setting_value
+                  value: 'false'
+              - column:
+                  name: category
+                  value: SECURITY
+              - column:
+                  name: description
+                  value: Enable password expiry policy
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: LANGUAGE
+              - column:
+                  name: setting_value
+                  value: '"en"'
+              - column:
+                  name: category
+                  value: SYSTEM
+              - column:
+                  name: description
+                  value: Default language (en/km/ko)
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: TIMEZONE
+              - column:
+                  name: setting_value
+                  value: '"Asia/Phnom_Penh"'
+              - column:
+                  name: category
+                  value: SYSTEM
+              - column:
+                  name: description
+                  value: Application timezone
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: DATE_FORMAT
+              - column:
+                  name: setting_value
+                  value: '"DD/MM/YYYY"'
+              - column:
+                  name: category
+                  value: SYSTEM
+              - column:
+                  name: description
+                  value: Date format
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: TIME_FORMAT
+              - column:
+                  name: setting_value
+                  value: '"24h"'
+              - column:
+                  name: category
+                  value: SYSTEM
+              - column:
+                  name: description
+                  value: Time format (12h/24h)
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: MAINTENANCE_MODE
+              - column:
+                  name: setting_value
+                  value: 'false'
+              - column:
+                  name: category
+                  value: SYSTEM
+              - column:
+                  name: description
+                  value: Enable maintenance mode
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: MAX_FILE_UPLOAD_SIZE
+              - column:
+                  name: setting_value
+                  value: '100'
+              - column:
+                  name: category
+                  value: APPLICATION
+              - column:
+                  name: description
+                  value: Max file upload size in MB
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: BACKUP_FREQUENCY
+              - column:
+                  name: setting_value
+                  value: '"daily"'
+              - column:
+                  name: category
+                  value: APPLICATION
+              - column:
+                  name: description
+                  value: Backup frequency (daily/weekly)
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: BACKUP_RETENTION_DAYS
+              - column:
+                  name: setting_value
+                  value: '30'
+              - column:
+                  name: category
+                  value: APPLICATION
+              - column:
+                  name: description
+                  value: Backup retention in days
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: AUDIT_LOG_RETENTION_DAYS
+              - column:
+                  name: setting_value
+                  value: '90'
+              - column:
+                  name: category
+                  value: ADVANCED
+              - column:
+                  name: description
+                  value: Audit log retention in days
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: app_settings
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: setting_key
+                  value: AUDIT_LOG_ENABLED
+              - column:
+                  name: setting_value
+                  value: 'true'
+              - column:
+                  name: category
+                  value: ADVANCED
+              - column:
+                  name: description
+                  value: Enable audit logging
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP

@@ -1,0 +1,245 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    USER MANAGEMENT REST API - QUICK REFERENCE             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+BASE URL: /api/users
+SECURITY: All endpoints require @PreAuthorize("hasRole('ADMIN')")
+
+════════════════════════════════════════════════════════════════════════════════
+
+1️⃣  LIST USERS WITH PAGINATION
+    GET /api/users
+    
+    Query Parameters:
+    - page (int, default=0)
+    - size (int, default=10)
+    - sort (string, default=createdAt)
+    - direction (string, default=desc)
+    - firstName (string, optional)
+    - lastName (string, optional)
+    - email (string, optional)
+    - active (boolean, optional)
+    
+    Response: 200 OK
+    {
+      "success": true,
+      "data": {
+        "content": [...],
+        "pageNumber": 0,
+        "pageSize": 10,
+        "totalElements": 50,
+        "totalPages": 5,
+        "hasNext": true,
+        "hasPrevious": false
+      }
+    }
+
+════════════════════════════════════════════════════════════════════════════════
+
+2️⃣  GET SINGLE USER
+    GET /api/users/{id}
+    
+    Path Parameter:
+    - id (UUID)
+    
+    Response: 200 OK
+    {
+      "success": true,
+      "data": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "john.doe",
+        "email": "john@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "active": true,
+        "roles": [...]
+      }
+    }
+    
+    Error: 404 Not Found
+
+════════════════════════════════════════════════════════════════════════════════
+
+3️⃣  CREATE USER
+    POST /api/users
+    
+    Request Body:
+    {
+      "username": "jane.smith",
+      "email": "jane@example.com",
+      "password": "SecurePass123!",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "active": true,
+      "roleIds": ["role-id-1", "role-id-2"]
+    }
+    
+    Validation:
+    - username: required, 3-100 chars, unique
+    - email: required, valid format, unique
+    - password: required, min 8 chars
+    
+    Response: 201 Created
+    {
+      "success": true,
+      "message": "User created successfully",
+      "data": {...}
+    }
+    
+    Errors:
+    - 400 Bad Request: Validation failed
+    - 403 Forbidden: Missing ADMIN role
+
+════════════════════════════════════════════════════════════════════════════════
+
+4️⃣  UPDATE USER
+    PUT /api/users/{id}
+    
+    Request Body (all optional):
+    {
+      "username": "new.username",
+      "email": "new@example.com",
+      "firstName": "Janet",
+      "lastName": "Smith",
+      "active": false,
+      "roleIds": ["role-id-1"]
+    }
+    
+    Response: 200 OK
+    {
+      "success": true,
+      "message": "User updated successfully",
+      "data": {...}
+    }
+    
+    Errors:
+    - 400 Bad Request: Validation failed
+    - 404 Not Found: User not found
+
+════════════════════════════════════════════════════════════════════════════════
+
+5️⃣  DELETE USER (SOFT DELETE)
+    DELETE /api/users/{id}
+    
+    Path Parameter:
+    - id (UUID)
+    
+    Response: 204 No Content
+    
+    Note: Marks deleted=true, does not remove record
+
+════════════════════════════════════════════════════════════════════════════════
+
+6️⃣  ASSIGN ROLES TO USER
+    POST /api/users/{id}/roles
+    
+    Path Parameter:
+    - id (UUID)
+    
+    Request Body (Set of UUID):
+    ["role-id-1", "role-id-2", "role-id-3"]
+    
+    Note: Replaces all existing roles with new set
+    
+    Response: 200 OK
+    {
+      "success": true,
+      "message": "Roles assigned successfully",
+      "data": {
+        "id": "...",
+        "roles": [...]
+      }
+    }
+    
+    Errors:
+    - 404 Not Found: User or role not found
+
+════════════════════════════════════════════════════════════════════════════════
+
+7️⃣  REMOVE ROLE FROM USER
+    DELETE /api/users/{id}/roles/{roleId}
+    
+    Path Parameters:
+    - id (UUID): User ID
+    - roleId (UUID): Role ID to remove
+    
+    Response: 204 No Content
+    
+    Errors:
+    - 404 Not Found: User or role not found
+
+════════════════════════════════════════════════════════════════════════════════
+
+8️⃣  EXPORT USERS
+    POST /api/users/export
+    
+    Query Parameters:
+    - format (string, default=csv): csv or excel
+    - firstName (string, optional)
+    - lastName (string, optional)
+    - email (string, optional)
+    - active (boolean, optional)
+    
+    Response: 200 OK
+    {
+      "success": true,
+      "message": "Users exported successfully",
+      "data": [
+        {
+          "id": "...",
+          "username": "...",
+          "email": "...",
+          "roles": [...]
+        },
+        ...
+      ]
+    }
+
+════════════════════════════════════════════════════════════════════════════════
+
+🔴 ERROR RESPONSES
+
+All errors follow this format:
+{
+  "success": false,
+  "message": "Error description",
+  "statusCode": XXX
+}
+
+Common Errors:
+- 400 Bad Request: Duplicate email/username, weak password, invalid format
+- 401 Unauthorized: Missing or invalid authentication
+- 403 Forbidden: Missing ADMIN role
+- 404 Not Found: User/role not found
+
+════════════════════════════════════════════════════════════════════════════════
+
+🔒 SECURITY
+
+✓ All endpoints require ADMIN role
+✓ Passwords encrypted with BCrypt
+✓ Email uniqueness enforced
+✓ Username uniqueness enforced
+✓ Spring Security integration
+✓ Soft delete preserves data
+
+════════════════════════════════════════════════════════════════════════════════
+
+💡 TIPS
+
+- Use pagination (page, size) for large datasets
+- Filter by status with ?active=true parameter
+- Sort descending with ?direction=desc (default)
+- Empty role list allowed (removes all roles)
+- Password never returned in responses
+- Use proper Content-Type: application/json headers
+
+════════════════════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTATION
+
+Full documentation available in:
+- USER_MANAGEMENT_API_DOCUMENTATION.md (Complete reference)
+- USER_MANAGEMENT_API_SUMMARY.md (Implementation details)
+
+════════════════════════════════════════════════════════════════════════════════

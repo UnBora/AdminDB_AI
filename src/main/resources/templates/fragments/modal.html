@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 
+    Reusable Modal Dialog Component
+    
+    Usage:
+    <div th:insert="fragments/modal :: modal(
+        modalId='confirmModal',
+        title='Confirm Action',
+        body='Are you sure?',
+        primaryBtn='Confirm',
+        primaryBtnClass='btn-primary',
+        secondaryBtn='Cancel')"
+    ></div>
+    
+    With custom body:
+    <div th:insert="fragments/modal :: modal(
+        modalId='editModal',
+        title='Edit Item',
+        scrollable=true)"
+    >
+        <!-- Your custom content -->
+    </div>
+    
+    Parameters:
+    - modalId: Unique identifier for the modal
+    - title: Modal title (can use translation key with #{})
+    - body: Modal body text (optional if using custom content)
+    - scrollable: Boolean - enable scrollable modal body (default: false)
+    - centered: Boolean - center modal vertically (default: true)
+    - backdrop: 'true', 'false', or 'static' - clickable backdrop (default: true)
+    - primaryBtn: Primary button text (optional)
+    - primaryBtnClass: Primary button Bootstrap class (e.g., 'btn-primary')
+    - secondaryBtn: Secondary button text (optional)
+    - primaryBtnAction: JavaScript action for primary button (optional)
+    - size: Modal size 'sm', 'lg', 'xl' (optional)
+    - closeBtn: Show close button (default: true)
+-->
+
+<div th:fragment="modal(modalId, title, body, scrollable, centered, backdrop, primaryBtn, primaryBtnClass, secondaryBtn, primaryBtnAction, size, closeBtn)"
+     class="modal fade"
+     th:id="${modalId}"
+     tabindex="-1"
+     th:attr="aria-labelledby='${modalId}Label'"
+     aria-hidden="true">
+    
+    <div class="modal-dialog"
+         th:classappend="${scrollable ? 'modal-dialog-scrollable' : ''} ${centered != false ? 'modal-dialog-centered' : ''} ${size != null ? 'modal-' + size : ''}">
+        
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" th:id="${modalId + 'Label'}">
+                    <span th:if="${title.startsWith('{') and title.endsWith('}')}"
+                          th:text="#{${title.substring(1, title.length() - 1)}}"></span>
+                    <span th:unless="${title.startsWith('{') and title.endsWith('}')}"
+                          th:text="${title}"></span>
+                </h5>
+                <button th:if="${closeBtn != false}"
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        title="Close modal"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <div th:if="${body != null}">
+                    <span th:if="${body.startsWith('{') and body.endsWith('}')}"
+                          th:text="#{${body.substring(1, body.length() - 1)}}"></span>
+                    <span th:unless="${body.startsWith('{') and body.endsWith('}')}"
+                          th:text="${body}"></span>
+                </div>
+                <!-- Custom content can be injected here -->
+                <div th:unless="${body != null}">
+                    <!-- Placeholder for custom body content -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <!-- Secondary Button (usually Cancel) -->
+                <button th:if="${secondaryBtn != null}"
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i>
+                    <span th:if="${secondaryBtn.startsWith('{') and secondaryBtn.endsWith('}')}"
+                          th:text="#{${secondaryBtn.substring(1, secondaryBtn.length() - 1)}}"></span>
+                    <span th:unless="${secondaryBtn.startsWith('{') and secondaryBtn.endsWith('}')}"
+                          th:text="${secondaryBtn}"></span>
+                </button>
+
+                <!-- Primary Button (usually Action) -->
+                <button th:if="${primaryBtn != null}"
+                        type="button"
+                        class="btn"
+                        th:classappend="${primaryBtnClass != null ? primaryBtnClass : 'btn-primary'}"
+                        th:attr="onclick=${primaryBtnAction}">
+                    <i class="bi bi-check-lg"></i>
+                    <span th:if="${primaryBtn.startsWith('{') and primaryBtn.endsWith('}')}"
+                          th:text="#{${primaryBtn.substring(1, primaryBtn.length() - 1)}}"></span>
+                    <span th:unless="${primaryBtn.startsWith('{') and primaryBtn.endsWith('}')}"
+                          th:text="${primaryBtn}"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Trigger Button -->
+<button th:fragment="modal-trigger(modalId, btnText, btnClass, icon)"
+        type="button"
+        class="btn"
+        th:classappend="${btnClass != null ? btnClass : 'btn-primary'}"
+        th:attr="data-bs-toggle='modal', data-bs-target='#${modalId}'">
+    <i th:if="${icon != null}" th:class="${icon}" class="bi"></i>
+    <span th:if="${btnText != null}" 
+          th:if="${btnText.startsWith('{') and btnText.endsWith('}')}"
+          th:text="#{${btnText.substring(1, btnText.length() - 1)}}"></span>
+    <span th:if="${btnText != null}" 
+          th:unless="${btnText.startsWith('{') and btnText.endsWith('}')}"
+          th:text="${btnText}"></span>
+</button>
+
+<!-- Confirmation Modal (pre-configured) -->
+<div th:fragment="confirm-modal(modalId, title, message, confirmText, cancelText, confirmAction)"
+     class="modal fade"
+     th:id="${modalId}"
+     tabindex="-1"
+     th:attr="aria-labelledby='${modalId}Label'"
+     aria-hidden="true">
+    
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger" th:id="${modalId + 'Label'}">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span th:text="#{${title}}"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p th:text="#{${message}}" class="mb-0"></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <span th:text="#{${cancelText}}"></span>
+                </button>
+                <button type="button" 
+                        class="btn btn-danger"
+                        th:attr="onclick=${confirmAction}"
+                        data-bs-dismiss="modal">
+                    <span th:text="#{${confirmText}}"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

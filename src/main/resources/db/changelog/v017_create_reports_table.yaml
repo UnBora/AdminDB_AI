@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: v017_create_reports_table
+      author: admin
+      changes:
+        - createTable:
+            tableName: reports
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: format
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: query_builder
+                  type: TEXT
+              - column:
+                  name: is_scheduled
+                  type: BOOLEAN
+                  defaultValue: false
+              - column:
+                  name: schedule_frequency
+                  type: VARCHAR(50)
+              - column:
+                  name: last_run_at
+                  type: TIMESTAMP
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+              - column:
+                  name: created_by
+                  type: UUID
+              - column:
+                  name: updated_by
+                  type: UUID
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValue: false
+
+        - createIndex:
+            indexName: idx_reports_type
+            tableName: reports
+            columns:
+              - column:
+                  name: type
+
+        - createIndex:
+            indexName: idx_reports_format
+            tableName: reports
+            columns:
+              - column:
+                  name: format
+
+        - createIndex:
+            indexName: idx_reports_scheduled
+            tableName: reports
+            columns:
+              - column:
+                  name: is_scheduled

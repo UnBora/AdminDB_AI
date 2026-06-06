@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>User Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.6/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.4.1/buttons.bootstrap5.min.css">
+    <style>
+        .user-management-container {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .action-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-buttons .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .filter-section.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                overflow: hidden;
+            }
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .datatable-wrapper {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 12px;
+        }
+
+        .table tbody td {
+            padding: 12px;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .status-deleted {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .action-icons a,
+        .action-icons button {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-icons .btn-edit {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .action-icons .btn-edit:hover {
+            background-color: #0056b3;
+        }
+
+        .action-icons .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .action-icons .btn-delete:hover {
+            background-color: #bb2d3b;
+        }
+
+        .action-icons .btn-roles {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .action-icons .btn-roles:hover {
+            background-color: #5a6268;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            margin-top: 10px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 6px 12px;
+            margin: 2px;
+            border-radius: 3px;
+        }
+
+        .spinner-border {
+            width: 20px;
+            height: 20px;
+            border-width: 2px;
+        }
+
+        .role-checkbox {
+            margin-right: 8px;
+        }
+
+        .role-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .role-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-lg {
+            max-width: 700px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+
+        .custom-checkbox {
+            padding-left: 1.5rem;
+        }
+
+        .custom-checkbox input[type="checkbox"] {
+            margin-left: -1.5rem;
+        }
+
+        .bulk-actions {
+            display: none;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bulk-actions.show {
+            display: flex;
+        }
+
+        .bulk-count {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-buttons .btn-group {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 8px;
+            }
+
+            .action-icons {
+                flex-direction: column;
+            }
+
+            .datatable-wrapper {
+                padding: 10px;
+            }
+
+            .modal-lg {
+                max-width: 95vw;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .btn-export-format {
+            display: none;
+        }
+
+        .btn-export-format.show {
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid user-management-container">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-2" th:text="#{user.management.title}">User Management</h1>
+                    <p class="text-muted mb-0" th:text="#{user.management.subtitle}">Manage system users, roles, and permissions</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success" id="btnCreateUser" data-bs-toggle="modal" data-bs-target="#userFormModal">
+                        <i class="fas fa-plus"></i> <span th:text="#{user.management.actions.create}">Create User</span>
+                    </button>
+                    <button type="button" class="btn btn-info" id="btnToggleFilters">
+                        <i class="fas fa-filter"></i> <span th:text="#{user.management.actions.filter}">Advanced Filters</span>
+                    </button>
+                    <button type="button" class="btn btn-warning" id="btnExport">
+                        <i class="fas fa-download"></i> <span th:text="#{user.management.actions.export}">Export</span>
+                    </button>
+                </div>
+
+                <!-- Bulk Actions (Hidden by default) -->
+                <div class="bulk-actions" id="bulkActions">
+                    <span class="bulk-count" id="bulkCount"></span>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnBulkDelete">
+                        <i class="fas fa-trash"></i> <span th:text="#{user.management.actions.delete}">Delete Selected</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Advanced Filters Section -->
+            <div class="filter-section" id="filterSection">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h6 th:text="#{user.management.filters.title}">Filter Users</h6>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterRole" th:text="#{user.management.filters.role}">Role</label>
+                        <select id="filterRole" class="form-select form-select-sm" multiple>
+                            <option value="">-- All Roles --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filterStatus" th:text="#{user.management.filters.status}">Status</label>
+                        <select id="filterStatus" class="form-select form-select-sm">
+                            <option value="">-- All Statuses --</option>
+                            <option value="active" th:text="#{user.management.status.active}">Active</option>
+                            <option value="inactive" th:text="#{user.management.status.inactive}">Inactive</option>
+                            <option value="deleted" th:text="#{user.management.status.deleted}">Deleted</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filterDateFrom" th:text="#{user.management.filters.created_date}">Created Date From</label>
+                        <input type="date" id="filterDateFrom" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filterDateTo" th:text="#{user.management.filters.created_date_to}">Created Date To</label>
+                        <input type="date" id="filterDateTo" class="form-control form-control-sm">
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterSearch" th:text="#{user.management.filters.search}">Search (Name/Email)</label>
+                        <input type="text" id="filterSearch" class="form-control form-control-sm" placeholder="Search by name or email">
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="btnApplyFilters">
+                        <i class="fas fa-check"></i> <span th:text="#{user.management.actions.apply}">Apply</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="btnResetFilters">
+                        <i class="fas fa-redo"></i> <span th:text="#{user.management.actions.reset}">Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="datatable-wrapper">
+                <table id="usersTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th th:text="#{user.management.columns.name}">Name</th>
+                            <th th:text="#{user.management.columns.email}">Email</th>
+                            <th th:text="#{user.management.columns.role}">Role</th>
+                            <th th:text="#{user.management.columns.status}">Status</th>
+                            <th th:text="#{user.management.columns.created_date}">Created Date</th>
+                            <th th:text="#{user.management.columns.actions}">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Create/Edit User Modal -->
+        <div class="modal fade" id="userFormModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="userFormModalTitle" th:text="#{user.management.modal.create_title}">Create User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="userForm" novalidate>
+                        <input type="hidden" id="userId" name="id">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="firstName" class="form-label" th:text="#{user.management.form.first_name}">First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                        <div class="invalid-feedback" th:text="#{user.management.validation.first_name_required}">First name is required</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="lastName" class="form-label" th:text="#{user.management.form.last_name}">Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                        <div class="invalid-feedback" th:text="#{user.management.validation.last_name_required}">Last name is required</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label for="email" class="form-label" th:text="#{user.management.form.email}">Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                        <div class="invalid-feedback" th:text="#{user.management.validation.email_required}">Valid email is required</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label for="password" class="form-label" th:text="#{user.management.form.password}">Password <span class="text-danger" id="passwordRequired">*</span></label>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                        <small class="text-muted" id="passwordHelp" th:text="#{user.management.validation.password_help}">Minimum 8 characters, include uppercase, lowercase, number, and special character</small>
+                                        <div class="invalid-feedback" id="passwordFeedback" th:text="#{user.management.validation.password_required}">Password is required</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="userRoles" class="form-label" th:text="#{user.management.form.roles}">Roles</label>
+                                        <div id="userRoles" class="form-control" style="height: auto; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;">
+                                            <!-- Roles will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="active" class="form-label" th:text="#{user.management.form.status}">Status</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="active" name="active" checked>
+                                            <label class="form-check-label" for="active" th:text="#{user.management.form.active}">Active</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{user.management.actions.cancel}">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="submitUserForm" th:text="#{user.management.actions.save}">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" th:text="#{user.management.modal.delete_title}">Delete User</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="deleteWarning" th:text="#{user.management.modal.delete_warning}">This action cannot be undone. Are you sure you want to delete this user?</span>
+                        </div>
+                        <p id="deleteUserInfo"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{user.management.actions.cancel}">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn" th:text="#{user.management.actions.delete}">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Assignment Modal -->
+        <div class="modal fade" id="roleAssignmentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" th:text="#{user.management.modal.roles_title}">Assign Roles</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="roleForm" novalidate>
+                        <input type="hidden" id="roleUserId" name="userId">
+                        <div class="modal-body">
+                            <h6 id="roleUserName"></h6>
+                            <div id="roleList" class="mt-3">
+                                <!-- Roles will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{user.management.actions.cancel}">Cancel</button>
+                            <button type="submit" class="btn btn-primary" th:text="#{user.management.actions.save}">Save Roles</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" th:text="#{user.management.modal.export_title}">Export Users</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p th:text="#{user.management.modal.export_description}">Select the format for exporting user data:</p>
+                        <div id="exportFormats" class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="btnExportExcel" data-format="excel">
+                                <i class="fas fa-file-excel"></i> Excel (.xlsx)
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btnExportCSV" data-format="csv">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                        <div class="mt-3 p-3 bg-light border rounded" id="exportIncluded">
+                            <small th:text="#{user.management.modal.export_note}"><strong>Note:</strong> Export includes filtered results with currently visible columns.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.6/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.6/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.4.1/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.4.1/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.0/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.0/vfs_fonts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.4.1/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.4.1/buttons.print.min.js"></script>
+    <script src="/js/ajax-helper.js" type="module"></script>
+    <script src="/js/modal-helper.js" type="module"></script>
+    <script src="/js/notification-handler.js" type="module"></script>
+    <script src="/js/datatable-init.js" type="module"></script>
+    <script src="/js/form-handler.js" type="module"></script>
+
+    <script type="module">
+        import { AjaxHelper } from '/js/ajax-helper.js';
+        import { ModalHelper } from '/js/modal-helper.js';
+        import { NotificationHandler } from '/js/notification-handler.js';
+        import { DataTableInit } from '/js/datatable-init.js';
+        import { FormHandler } from '/js/form-handler.js';
+
+        // Make utilities globally available
+        window.AjaxHelper = AjaxHelper;
+        window.ModalHelper = ModalHelper;
+        window.NotificationHandler = NotificationHandler;
+        window.DataTableInit = DataTableInit;
+        window.FormHandler = FormHandler;
+
+        class UserManagement {
+            constructor() {
+                this.usersTable = null;
+                this.userToDelete = null;
+                this.userToAssignRoles = null;
+                this.editingUserId = null;
+                this.allRoles = [];
+                this.selectedUsers = new Set();
+                this.init();
+            }
+
+            init() {
+                this.initDataTable();
+                this.loadRoles();
+                this.setupEventListeners();
+                this.setupFormHandling();
+            }
+
+            initDataTable() {
+                const columns = [
+                    {
+                        data: null,
+                        render: () => '<input type="checkbox" class="user-checkbox">',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: null,
+                        render: (data) => {
+                            return data.firstName && data.lastName 
+                                ? `${data.firstName} ${data.lastName}`
+                                : `${data.username}`;
+                        }
+                    },
+                    { data: 'email' },
+                    {
+                        data: 'roles',
+                        render: (roles) => {
+                            if (!roles || roles.length === 0) return '-';
+                            return roles.map(r => `<span class="role-badge">${r.name}</span>`).join('');
+                        }
+                    },
+                    {
+                        data: 'active',
+                        render: (active) => {
+                            const status = active ? 'active' : 'inactive';
+                            const label = active ? 'Active' : 'Inactive';
+                            return `<span class="status-badge status-${status}">${label}</span>`;
+                        }
+                    },
+                    {
+                        data: 'createdAt',
+                        render: (date) => {
+                            return new Date(date).toLocaleDateString();
+                        }
+                    },
+                    {
+                        data: null,
+                        render: (data) => {
+                            return `
+                                <div class="action-icons">
+                                    <button type="button" class="btn-edit btn-sm" data-user-id="${data.id}" title="Edit User">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn-roles btn-sm" data-user-id="${data.id}" title="Assign Roles">
+                                        <i class="fas fa-user-tie"></i>
+                                    </button>
+                                    <button type="button" class="btn-delete btn-sm" data-user-id="${data.id}" title="Delete User">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            `;
+                        },
+                        orderable: false,
+                        searchable: false
+                    }
+                ];
+
+                this.usersTable = new $.fn.DataTable.Api(
+                    $('#usersTable').DataTable({
+                        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"row"<"col-sm-12"tr>><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                        columns: columns,
+                        serverSide: true,
+                        ajax: {
+                            url: '/api/users',
+                            type: 'GET',
+                            data: (d) => {
+                                // Add custom filters
+                                const searchText = $('#filterSearch').val();
+                                if (searchText) {
+                                    d.search = searchText;
+                                }
+                                
+                                const status = $('#filterStatus').val();
+                                if (status === 'active') {
+                                    d.active = true;
+                                } else if (status === 'inactive') {
+                                    d.active = false;
+                                }
+
+                                const dateFrom = $('#filterDateFrom').val();
+                                if (dateFrom) {
+                                    d.dateFrom = dateFrom;
+                                }
+
+                                const dateTo = $('#filterDateTo').val();
+                                if (dateTo) {
+                                    d.dateTo = dateTo;
+                                }
+
+                                const roles = $('#filterRole').val();
+                                if (roles && roles.length > 0) {
+                                    d.roles = roles.join(',');
+                                }
+
+                                return d;
+                            },
+                            headers: AjaxHelper.buildHeaders()
+                        },
+                        processing: true,
+                        pageLength: 10,
+                        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                        ordering: true,
+                        searching: true,
+                        responsive: true,
+                        language: {
+                            emptyTable: 'No users found',
+                            loadingRecords: 'Loading...',
+                            processing: 'Processing...',
+                            zeroRecords: 'No matching users found'
+                        },
+                        createdRow: (row, data) => {
+                            $(row).attr('data-user-id', data.id);
+                        },
+                        drawCallback: () => {
+                            this.attachRowEventListeners();
+                            this.updateBulkActionsUI();
+                        }
+                    })
+                );
+            }
+
+            loadRoles() {
+                AjaxHelper.GET('/api/roles')
+                    .then(response => {
+                        if (response.data && Array.isArray(response.data)) {
+                            this.allRoles = response.data;
+                            this.populateRoleFilters();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to load roles:', error);
+                        NotificationHandler.showError('Failed to load roles');
+                    });
+            }
+
+            populateRoleFilters() {
+                const roleSelect = document.getElementById('filterRole');
+                this.allRoles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role.id;
+                    option.textContent = role.name;
+                    roleSelect.appendChild(option);
+                });
+            }
+
+            setupEventListeners() {
+                // Filter toggle
+                document.getElementById('btnToggleFilters').addEventListener('click', () => {
+                    const filterSection = document.getElementById('filterSection');
+                    filterSection.classList.toggle('show');
+                });
+
+                // Apply filters
+                document.getElementById('btnApplyFilters').addEventListener('click', () => {
+                    if (this.usersTable) {
+                        this.usersTable.draw();
+                    }
+                });
+
+                // Reset filters
+                document.getElementById('btnResetFilters').addEventListener('click', () => {
+                    document.getElementById('filterSearch').value = '';
+                    document.getElementById('filterStatus').value = '';
+                    document.getElementById('filterRole').value = [];
+                    document.getElementById('filterDateFrom').value = '';
+                    document.getElementById('filterDateTo').value = '';
+                    
+                    // Trigger select change to update Select2 if used
+                    $('#filterRole').trigger('change');
+                    
+                    if (this.usersTable) {
+                        this.usersTable.draw();
+                    }
+                });
+
+                // Create user button
+                document.getElementById('btnCreateUser').addEventListener('click', () => {
+                    this.editingUserId = null;
+                    this.resetUserForm();
+                    document.getElementById('userFormModalTitle').textContent = 'Create User';
+                    document.getElementById('passwordRequired').style.display = 'inline';
+                    document.getElementById('password').required = true;
+                    document.getElementById('submitUserForm').textContent = 'Create';
+                });
+
+                // Export button
+                document.getElementById('btnExport').addEventListener('click', () => {
+                    ModalHelper.showModal('exportModal');
+                });
+
+                document.getElementById('btnExportExcel').addEventListener('click', () => {
+                    this.exportUsers('excel');
+                });
+
+                document.getElementById('btnExportCSV').addEventListener('click', () => {
+                    this.exportUsers('csv');
+                });
+
+                // Bulk delete
+                document.getElementById('btnBulkDelete').addEventListener('click', () => {
+                    const selectedIds = Array.from(this.selectedUsers);
+                    if (selectedIds.length === 0) {
+                        NotificationHandler.showWarning('Please select at least one user');
+                        return;
+                    }
+
+                    ModalHelper.showConfirm(
+                        'Delete Users',
+                        `Are you sure you want to delete ${selectedIds.length} user(s)? This action cannot be undone.`,
+                        () => this.bulkDeleteUsers(selectedIds)
+                    );
+                });
+
+                // Select all checkbox
+                document.getElementById('selectAll').addEventListener('change', (e) => {
+                    const checkboxes = document.querySelectorAll('tbody .user-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = e.target.checked;
+                        this.toggleUserSelection(checkbox.closest('tr').getAttribute('data-user-id'), e.target.checked);
+                    });
+                });
+            }
+
+            setupFormHandling() {
+                const form = document.getElementById('userForm');
+                const modal = new bootstrap.Modal(document.getElementById('userFormModal'));
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    if (!FormHandler.validateForm(form)) {
+                        return;
+                    }
+
+                    const formData = FormHandler.getFormData(form);
+                    const isEdit = !!this.editingUserId;
+
+                    // Get selected roles
+                    const selectedRoles = [];
+                    document.querySelectorAll('#userRoles input[type="checkbox"]:checked').forEach(checkbox => {
+                        selectedRoles.push(checkbox.value);
+                    });
+                    formData.roleIds = selectedRoles;
+
+                    try {
+                        this.showLoadingOverlay(true);
+
+                        let response;
+                        if (isEdit) {
+                            response = await AjaxHelper.PUT(`/api/users/${this.editingUserId}`, formData);
+                        } else {
+                            response = await AjaxHelper.POST('/api/users', formData);
+                        }
+
+                        NotificationHandler.showSuccess(
+                            isEdit ? 'User updated successfully' : 'User created successfully'
+                        );
+
+                        modal.hide();
+                        this.resetUserForm();
+                        this.usersTable.draw();
+
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        NotificationHandler.showError(error.message || 'Failed to save user');
+                    } finally {
+                        this.showLoadingOverlay(false);
+                    }
+                });
+            }
+
+            attachRowEventListeners() {
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.removeEventListener('click', this.onEditClick);
+                    btn.addEventListener('click', (e) => this.onEditClick(e));
+                });
+
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.removeEventListener('click', this.onDeleteClick);
+                    btn.addEventListener('click', (e) => this.onDeleteClick(e));
+                });
+
+                document.querySelectorAll('.btn-roles').forEach(btn => {
+                    btn.removeEventListener('click', this.onRolesClick);
+                    btn.addEventListener('click', (e) => this.onRolesClick(e));
+                });
+
+                document.querySelectorAll('tbody .user-checkbox').forEach(checkbox => {
+                    checkbox.removeEventListener('change', this.onCheckboxChange);
+                    checkbox.addEventListener('change', (e) => this.onCheckboxChange(e));
+                });
+            }
+
+            onEditClick = (e) => {
+                const userId = e.currentTarget.getAttribute('data-user-id');
+                this.editingUserId = userId;
+
+                AjaxHelper.GET(`/api/users/${userId}`)
+                    .then(response => {
+                        const user = response.data;
+                        this.populateUserForm(user);
+                        document.getElementById('userFormModalTitle').textContent = 'Edit User';
+                        document.getElementById('passwordRequired').style.display = 'none';
+                        document.getElementById('password').required = false;
+                        document.getElementById('password').value = '';
+                        document.getElementById('submitUserForm').textContent = 'Update';
+                        ModalHelper.showModal('userFormModal');
+                    })
+                    .catch(error => {
+                        console.error('Failed to load user:', error);
+                        NotificationHandler.showError('Failed to load user details');
+                    });
+            };
+
+            onDeleteClick = (e) => {
+                const userId = e.currentTarget.getAttribute('data-user-id');
+                const row = this.usersTable.row((idx, data) => data.id === userId).data();
+
+                this.userToDelete = userId;
+                const userName = row.firstName && row.lastName 
+                    ? `${row.firstName} ${row.lastName}`
+                    : row.username;
+
+                document.getElementById('deleteUserInfo').textContent = `User: ${userName} (${row.email})`;
+                ModalHelper.showModal('deleteConfirmModal');
+            };
+
+            onRolesClick = (e) => {
+                const userId = e.currentTarget.getAttribute('data-user-id');
+                const row = this.usersTable.row((idx, data) => data.id === userId).data();
+
+                this.userToAssignRoles = userId;
+                const userName = row.firstName && row.lastName 
+                    ? `${row.firstName} ${row.lastName}`
+                    : row.username;
+
+                document.getElementById('roleUserId').value = userId;
+                document.getElementById('roleUserName').textContent = userName;
+
+                this.populateRoleList(row.roles || []);
+                ModalHelper.showModal('roleAssignmentModal');
+            };
+
+            onCheckboxChange = (e) => {
+                const row = e.target.closest('tr');
+                const userId = row.getAttribute('data-user-id');
+                this.toggleUserSelection(userId, e.target.checked);
+            };
+
+            toggleUserSelection(userId, isSelected) {
+                if (isSelected) {
+                    this.selectedUsers.add(userId);
+                } else {
+                    this.selectedUsers.delete(userId);
+                }
+                this.updateBulkActionsUI();
+            }
+
+            updateBulkActionsUI() {
+                const bulkActions = document.getElementById('bulkActions');
+                const bulkCount = document.getElementById('bulkCount');
+
+                if (this.selectedUsers.size > 0) {
+                    bulkActions.classList.add('show');
+                    bulkCount.textContent = `${this.selectedUsers.size} user(s) selected`;
+                } else {
+                    bulkActions.classList.remove('show');
+                    this.selectedUsers.clear();
+                }
+            }
+
+            populateUserForm(user) {
+                document.getElementById('userId').value = user.id;
+                document.getElementById('firstName').value = user.firstName || '';
+                document.getElementById('lastName').value = user.lastName || '';
+                document.getElementById('email').value = user.email || '';
+                document.getElementById('active').checked = user.active !== false;
+
+                // Clear and populate roles
+                const rolesContainer = document.getElementById('userRoles');
+                rolesContainer.innerHTML = '';
+
+                this.allRoles.forEach(role => {
+                    const isChecked = user.roles && user.roles.some(r => r.id === role.id);
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'role-item';
+                    checkbox.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="role_${role.id}" value="${role.id}" ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="role_${role.id}">${role.name}</label>
+                        </div>
+                    `;
+                    rolesContainer.appendChild(checkbox);
+                });
+            }
+
+            resetUserForm() {
+                const form = document.getElementById('userForm');
+                form.reset();
+                form.classList.remove('was-validated');
+
+                document.getElementById('userId').value = '';
+                const rolesContainer = document.getElementById('userRoles');
+                rolesContainer.innerHTML = '';
+
+                this.allRoles.forEach(role => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'role-item';
+                    checkbox.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="role_${role.id}" value="${role.id}">
+                            <label class="form-check-label" for="role_${role.id}">${role.name}</label>
+                        </div>
+                    `;
+                    rolesContainer.appendChild(checkbox);
+                });
+            }
+
+            populateRoleList(currentRoles) {
+                const roleList = document.getElementById('roleList');
+                roleList.innerHTML = '';
+
+                this.allRoles.forEach(role => {
+                    const isAssigned = currentRoles.some(r => r.id === role.id);
+                    const roleItem = document.createElement('div');
+                    roleItem.className = 'role-item';
+                    roleItem.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="assignRole_${role.id}" name="roleIds" value="${role.id}" ${isAssigned ? 'checked' : ''}>
+                            <label class="form-check-label" for="assignRole_${role.id}">
+                                <strong>${role.name}</strong>
+                                ${role.description ? `<br><small class="text-muted">${role.description}</small>` : ''}
+                            </label>
+                        </div>
+                    `;
+                    roleList.appendChild(roleItem);
+                });
+            }
+
+            async bulkDeleteUsers(userIds) {
+                try {
+                    this.showLoadingOverlay(true);
+
+                    for (const userId of userIds) {
+                        await AjaxHelper.DELETE(`/api/users/${userId}`);
+                    }
+
+                    NotificationHandler.showSuccess(`${userIds.length} user(s) deleted successfully`);
+                    this.selectedUsers.clear();
+                    this.usersTable.draw();
+
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                    NotificationHandler.showError('Failed to delete some users');
+                } finally {
+                    this.showLoadingOverlay(false);
+                }
+            }
+
+            async deleteUser() {
+                if (!this.userToDelete) return;
+
+                try {
+                    this.showLoadingOverlay(true);
+                    await AjaxHelper.DELETE(`/api/users/${this.userToDelete}`);
+                    NotificationHandler.showSuccess('User deleted successfully');
+                    this.usersTable.draw();
+                    this.userToDelete = null;
+
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    NotificationHandler.showError('Failed to delete user');
+                } finally {
+                    this.showLoadingOverlay(false);
+                }
+            }
+
+            async exportUsers(format) {
+                try {
+                    this.showLoadingOverlay(true);
+
+                    // Build export filters
+                    const filters = {
+                        format: format,
+                        search: document.getElementById('filterSearch').value,
+                        status: document.getElementById('filterStatus').value,
+                        dateFrom: document.getElementById('filterDateFrom').value,
+                        dateTo: document.getElementById('filterDateTo').value,
+                        roles: document.getElementById('filterRole').value
+                    };
+
+                    // Remove empty filters
+                    Object.keys(filters).forEach(key => {
+                        if (!filters[key] || (Array.isArray(filters[key]) && filters[key].length === 0)) {
+                            delete filters[key];
+                        }
+                    });
+
+                    const queryString = new URLSearchParams(filters).toString();
+                    await AjaxHelper.EXPORT(`/api/users/export?${queryString}`, format, `users_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`);
+
+                    NotificationHandler.showSuccess(`Users exported successfully as ${format.toUpperCase()}`);
+                    ModalHelper.closeModal('exportModal');
+
+                } catch (error) {
+                    console.error('Export error:', error);
+                    NotificationHandler.showError('Failed to export users');
+                } finally {
+                    this.showLoadingOverlay(false);
+                }
+            }
+
+            showLoadingOverlay(show) {
+                const overlay = document.getElementById('loadingOverlay');
+                if (show) {
+                    overlay.classList.add('show');
+                } else {
+                    overlay.classList.remove('show');
+                }
+            }
+        }
+
+        // Setup delete confirmation handler
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'confirmDeleteBtn') {
+                const userMgmt = window.userManagementInstance;
+                if (userMgmt) {
+                    userMgmt.deleteUser();
+                }
+            }
+        });
+
+        // Setup role form submission
+        document.getElementById('roleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userId = document.getElementById('roleUserId').value;
+            const selectedRoles = [];
+            
+            document.querySelectorAll('#roleList input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedRoles.push(checkbox.value);
+            });
+
+            try {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.add('show');
+
+                await AjaxHelper.POST(`/api/users/${userId}/roles`, { roleIds: selectedRoles });
+
+                NotificationHandler.showSuccess('Roles assigned successfully');
+                ModalHelper.closeModal('roleAssignmentModal');
+                window.userManagementInstance.usersTable.draw();
+
+            } catch (error) {
+                console.error('Role assignment error:', error);
+                NotificationHandler.showError('Failed to assign roles');
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            window.userManagementInstance = new UserManagement();
+        });
+
+        // Make utilities globally available
+        window.CommonUtils = {
+            setLoadingState: (btn, loading) => {
+                if (loading) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.getAttribute('data-original-text') || btn.textContent;
+                }
+            },
+            showError: (field, message) => {
+                field.classList.add('is-invalid');
+                const feedback = field.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = message;
+                }
+            },
+            clearErrors: (form) => {
+                form.querySelectorAll('.is-invalid').forEach(field => {
+                    field.classList.remove('is-invalid');
+                });
+            },
+            debounce: (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        };
+    </script>
+</body>
+</html>
