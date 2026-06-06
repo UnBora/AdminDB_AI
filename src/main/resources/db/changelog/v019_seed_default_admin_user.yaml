@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: v019_seed_default_admin_user
+      author: platform
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: '550e8400-e29b-41d4-a716-446655440010'
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: email
+                  value: admin@example.com
+              - column:
+                  name: password
+                  value: '$2y$10$RkCTz1ZZW6NH/FIoN09Mc.gIlI8H68qKkUGU9P/6u7HjP4ZNFOCzG'
+              - column:
+                  name: first_name
+                  value: System
+              - column:
+                  name: last_name
+                  value: Administrator
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: deleted
+                  valueBoolean: false
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+        - insert:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  value: '550e8400-e29b-41d4-a716-446655440010'
+              - column:
+                  name: role_id
+                  value: '550e8400-e29b-41d4-a716-446655440001'

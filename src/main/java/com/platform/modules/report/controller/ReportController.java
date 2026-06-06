@@ -52,21 +52,21 @@ public class ReportController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ReportResponse> createReport(@Valid @RequestBody ReportRequest request, Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
         return ApiResponse.success(reportService.createReport(request, userId), "Report created successfully");
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ReportResponse> updateReport(@PathVariable UUID id, @Valid @RequestBody ReportRequest request) {
         reportService.update(id, request);
         return ApiResponse.success(reportService.mapToDto(reportService.getById(id)), "Report updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> deleteReport(@PathVariable UUID id) {
         reportService.delete(id);
         return ApiResponse.success(null, "Report deleted successfully");
